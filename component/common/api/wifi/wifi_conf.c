@@ -15,10 +15,6 @@
 #include <device_lock.h>
 #include <wlan_intf.h>
 
-#if defined(CONFIG_MATTER) && CONFIG_MATTER
-#include "chip_porting.h"
-#endif
-
 #if CONFIG_EXAMPLE_WLAN_FAST_CONNECT
 #include "wlan_fast_connect/example_wlan_fast_connect.h"
 #if defined(CONFIG_FAST_DHCP) && CONFIG_FAST_DHCP
@@ -195,10 +191,6 @@ extern int rltk_set_mode_prehandle(rtw_mode_t curr_mode, rtw_mode_t next_mode, c
 extern int rltk_set_mode_posthandle(rtw_mode_t curr_mode, rtw_mode_t next_mode, const char *ifname);
 #ifdef CONFIG_PMKSA_CACHING
 extern int wifi_set_pmk_cache_enable(unsigned char value);
-#endif
-#if defined(CONFIG_MATTER) && CONFIG_MATTER
-extern u8 matter_wifi_trigger;
-extern void matter_wifi_autoreconnect_hdl(rtw_security_t security_type, char *ssid, int ssid_len, char *password, int password_len, int key_id);
 #endif
 
 //----------------------------------------------------------------------------//
@@ -3604,11 +3596,6 @@ int wifi_config_autoreconnect(__u8 mode, __u8 retry_times, __u16 timeout)
 	if (mode == RTW_AUTORECONNECT_DISABLE) {
 		p_wlan_autoreconnect_hdl = NULL;
 	}
-#if defined(CONFIG_MATTER) && CONFIG_MATTER
-	else if (matter_wifi_trigger) {
-		p_wlan_autoreconnect_hdl = matter_wifi_autoreconnect_hdl;
-	}
-#endif
 	else {
 		p_wlan_autoreconnect_hdl = wifi_autoreconnect_hdl;
 	}

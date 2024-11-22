@@ -28,4 +28,7 @@
 #define F_BT_LE_5_0_SET_PHY_SUPPORT         0
 #endif
 
+#if defined(CONFIG_MATTER) && ( CONFIG_MATTER==1 )
+#include <app_common_flags_matter.h>
+#endif
 #endif

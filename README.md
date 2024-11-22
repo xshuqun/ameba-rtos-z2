@@ -13,6 +13,9 @@ GitHub `ameba-rtos-z2` repository is the development framework for AmebaZ2 and A
 * :books: [Z2 Datasheet](https://github.com/Ameba-AIoT/ameba-rtos-z2/blob/main/doc/RTL8720Cx-VH2_Datasheet_V1.0_20230224.pdf)
 * :books: [Z2plus Datasheet](https://github.com/Ameba-AIoT/ameba-rtos-z2/blob/main/doc/Realtek_AmebaZII+_Datasheet_v1.1.pdf)
 
+# Matter Support
+Please check out [ameba-rtos-matter](https://github.com/Ameba-AIoT/ameba-rtos-matter) to learn more about Matter support.
+
 # Setup Build Environments
 
 ## GCC Environment on Windows

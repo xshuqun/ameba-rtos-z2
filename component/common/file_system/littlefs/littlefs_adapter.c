@@ -17,10 +17,8 @@ struct lfs_config g_lfs_cfg = {
 	.read_size = 1,
 	.prog_size = 1,
 	.block_size = 4096,
-#ifndef CONFIG_USE_FLASHCFG
 	.block_count = LFS_DEVICE_SIZE / 4096,
 	.lookahead_size = (LFS_DEVICE_SIZE / 4096 / 8) * 8,
-#endif
 	.cache_size = 256,
 	.block_cycles = 100,
 };

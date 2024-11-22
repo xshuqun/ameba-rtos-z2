@@ -21,6 +21,8 @@
 #else
 
 // System includes
+#include <FreeRTOS.h>
+#include <platform_stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
