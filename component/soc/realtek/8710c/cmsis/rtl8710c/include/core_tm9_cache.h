@@ -195,7 +195,7 @@ __STATIC_INLINE void SCB_NS_EnableDCache (void)
 __STATIC_INLINE void SCB_DisableDCache (void)
 {
   #if defined (__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
-  #if __cplusplus >= 201703L //C++ 17 and above
+  #if defined(__cplusplus) && (__cplusplus >= 201703L) //C++ 17 and above
     uint32_t ccsidr;
     uint32_t sets;
     uint32_t ways;

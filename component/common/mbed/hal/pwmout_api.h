@@ -124,6 +124,12 @@ void pwmout_pulsewidth_ms(pwmout_t* obj, int ms);
   */
 void pwmout_pulsewidth_us(pwmout_t* obj, int us);
 
+/**
+  * @brief  Start the PWM device of the specified channel.
+  * @param  obj: PWM object define in application software.
+  * @retval none
+  */
+void pwmout_start(pwmout_t *obj);
 ///@}
 
 #if (defined(CONFIG_PLATFORM_8195BHP) && (CONFIG_PLATFORM_8195BHP == 1))  ||  (defined(CONFIG_PLATFORM_8195BLP) && (CONFIG_PLATFORM_8195BLP == 1))||  (defined(CONFIG_PLATFORM_8710C) && (CONFIG_PLATFORM_8710C == 1))
