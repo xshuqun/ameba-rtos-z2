@@ -535,14 +535,24 @@ size_t xPortGetMinimumEverFreeHeapSize( void )
 #if defined(CONFIG_MATTER) && CONFIG_MATTER
 size_t xPortGetTotalHeapSize( void )
 {
-	if(hal_get_flash_port_cfg() != FLASH_PORTB){ // not a flash MCM package, so PSRAM on B port is possible
-		if(hal_lpcram_is_valid() == HAL_OK){
+	if(hal_get_flash_port_cfg() != FLASH_PORTB) // not a flash MCM package, so PSRAM on B port is possible
+	{ 
+		if(hal_lpcram_is_valid() == HAL_OK)
+		{
+#ifdef CONFIG_PLATFORM_Z2PLUS
+			return configTOTAL_HEAP0_SIZE + configTOTAL_HEAP1_SIZE + configTOTAL_HEAP2_SIZE;
+#else
 			return configTOTAL_HEAP0_SIZE + configTOTAL_HEAP1_SIZE;
+#endif
 		}
 	}
 	else
 	{
+#ifdef CONFIG_PLATFORM_Z2PLUS
+		return configTOTAL_HEAP0_SIZE + configTOTAL_HEAP2_SIZE;
+#else
 		return configTOTAL_HEAP0_SIZE;
+#endif
 	}
 }
 /*-----------------------------------------------------------*/
