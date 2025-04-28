@@ -5,6 +5,9 @@ LBITS := $(shell getconf LONG_BIT)
 
 include toolchain.mk
 
+.PHONY: lib_amazon
+lib_amazon: toolchain
+	@$(MAKE) -f lib_amazon.mk
 
 .PHONY: is
 is: toolchain
