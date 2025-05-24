@@ -1,87 +1,79 @@
 #!/bin/bash
 
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 <IC type> [optional argument]"
-  echo "IC type: amebaz2 / amebaz2plus / amebad"
-  echo "Project type (for amebaz2 & amebaz2plus): If provided, can be 'tz' or 'is'"
+  echo "Usage: $0 <IC type> [project type]"
+  echo "IC type: amebaz2 / amebaz2plus"
+  echo "Project type (optional): tz or is (default: is)"
   exit 1
 fi
 
 AMEBA="$1"
-PROJECT_ARG="$2"  # The second argument, optional
+PROJECT_ARG="${2:-is}"
+
+if [ "$AMEBA" != "amebaz2" ] && [ "$AMEBA" != "amebaz2plus" ]; then
+  echo "Invalid IC type. Expected: amebaz2 or amebaz2plus."
+  exit 1
+fi
+
+REPO_NAME=$(basename -s .git "$(git remote get-url origin)")
+
+CHIP_LINK="$PWD/third_party/connectedhomeip"
+CHIP_SRC="../../connectedhomeip"
+
+PROJECT_DIR="$PWD/project/realtek_${AMEBA}_v0_example"
+MATTER_DIR="$PWD/component/common/application/matter"
+MATTER_PROJECT_DIR="$MATTER_DIR/project/${AMEBA}"
+MATTER_SCRIPT="$MATTER_DIR/tools/scripts/matter_version_selection.sh"
 
 files_to_delete=(
   "$PWD/component/soc/realtek/8710c/misc/utilities/include/ctype.h"
 )
 
-AMEBAZPLUS_PROJECT="$PWD/project/realtek_amebaz2plus_v0_example"
-AMEBAZ2_PROJECT="$PWD/project/realtek_amebaz2_v0_example"
-MATTER_AMEBAZ2_DIR="$PWD/component/common/application/matter/project/amebaz2"
-MATTER_AMEBAZ2PLUS_DIR="$PWD/component/common/application/matter/project/amebaz2plus"
-MATTER_DIR="$PWD/component/common/application/matter"
+# --- 1: Setup third_party softlink ---
+mkdir -p third_party
+rm -rf "$CHIP_LINK"
+ln -s "$CHIP_SRC" "$CHIP_LINK"
 
-DEFAULT_MATTER_VERSION="main"
-
-echo "Available Matter Versions:"
-echo "1) v1.4"
-echo "2) main (default)"
-
-read -p "Enter Matter Version (default: $DEFAULT_MATTER_VERSION): " MATTER_VERSION
-MATTER_VERSION=${MATTER_VERSION:-$DEFAULT_MATTER_VERSION}
-
-# Validate input
-if [[ "$MATTER_VERSION" != "v1.4" && "$MATTER_VERSION" != "main" ]]; then
-    echo "Invalid input of Matter Version"
-    exit 1
-fi
-
-if [ "$MATTER_VERSION" != "main" ]; then
-    MATTER_BRANCH="release/$MATTER_VERSION"
-else
-    MATTER_BRANCH="main"
-fi
-
-echo "Selected Matter version: $MATTER_VERSION ($MATTER_BRANCH)"
-
-
-if [ ! -d third_party ];then
-    mkdir third_party
-else
-    rm third_party/connectedhomeip
-fi
-
-cd third_party
-rm -rf connectedhomeip
-ln -s ../../connectedhomeip connectedhomeip
-
-cd ../
-
-# Clone or Update Matter Repository
+# --- 2: Clone Ameba Matter repo if not present ---
 if [ ! -d "$MATTER_DIR" ]; then
-    mkdir -p "$MATTER_DIR"
-    git clone -b $MATTER_BRANCH https://github.com/Ameba-AIoT/ameba-rtos-matter.git "$MATTER_DIR"
-else
-    cd "$MATTER_DIR" || exit 1
-    if [ -d ".git" ] && git rev-parse --is-inside-work-tree > /dev/null 2>&1 && git rev-parse HEAD > /dev/null 2>&1; then
-        current_branch=$(git rev-parse --abbrev-ref HEAD)
-        if [ "$current_branch" != "$MATTER_BRANCH" ]; then
-            echo "Switching to branch '$MATTER_BRANCH'"
-            git checkout "$MATTER_BRANCH" || exit 1
-        fi
-    else
-        echo "Something is wrong with Matter folder. Re-cloning..."
-        cd - > /dev/null || exit 1
-        rm -rf "$MATTER_DIR"
-        git clone -b "$MATTER_BRANCH" https://github.com/Ameba-AIoT/ameba-rtos-matter.git "$MATTER_DIR"
-    fi
-    cd - > /dev/null || exit 1
+  echo "Cloning Matter repository..."
+  git clone https://github.com/Ameba-AIoT/ameba-rtos-matter.git "$MATTER_DIR"
 fi
 
+# --- 3: Run matter version selection script ---
+cd "$MATTER_DIR" || exit 1
+
+if [ -f "$MATTER_SCRIPT" ]; then
+  bash "$MATTER_SCRIPT" "$AMEBA" "$REPO_NAME"
+else
+  echo "Error: $MATTER_SCRIPT not found."
+  exit 1
+fi
+
+# --- 4: Ensure correct Matter branch ---
+MATTER_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$current_branch" != "$MATTER_BRANCH" ]; then
+    echo "Switching to branch '$MATTER_BRANCH'"
+    git checkout "$MATTER_BRANCH" || exit 1
+  fi
+else
+  echo "Matter repo seems broken. Re-cloning..."
+  cd - > /dev/null || exit 1
+  rm -rf "$MATTER_DIR"
+  git clone -b "$MATTER_BRANCH" https://github.com/Ameba-AIoT/ameba-rtos-matter.git "$MATTER_DIR"
+fi
+
+cd - > /dev/null || exit 1
+
+# --- Helper Functions ---
 delete_files() {
   for file_path in "${files_to_delete[@]}"; do
     if [ -e "$file_path" ]; then
       rm "$file_path"
-      echo "File $file_path removed."
+      echo "Removed: $file_path"
     fi
   done
 }
@@ -89,51 +81,31 @@ delete_files() {
 modify_makefiles() {
   find "$BASE_DIR" -type f -name "Makefile" | while read -r FILE; do
     if grep -q "ENABLE_MATTER = 0" "$FILE"; then
-      echo "Modifying $FILE"
+      echo "Enabling Matter in: $FILE"
       sed -i 's/^ENABLE_MATTER = 0/ENABLE_MATTER = 1/' "$FILE"
     fi
   done
-  find "$MATTER_DIR" -type f -name "Makefile.include.matter" | while read -r FILE; do
+
+  find "$MATTER_PROJECT_DIR" -type f -name "Makefile.include.matter" | while read -r FILE; do
     if [ "$PROJECT_ARG" == "tz" ]; then
-      if grep -q "FREERTOS_VERSION   = freertos_v10.0.1" "$FILE"; then
-        echo "Modifying $FILE for TZ project"
-        sed -i 's/^FREERTOS_VERSION   = freertos_v10.0.1/FREERTOS_VERSION   = freertos_v10.2.0/' "$FILE" || {
-          echo "Failed to modify $FILE" >&2
-          exit 1
-        }
-      fi
+      sed -i 's/^FREERTOS_VERSION   = freertos_v10.0.1/FREERTOS_VERSION   = freertos_v10.2.0/' "$FILE" && \
+      echo "Updated FreeRTOS to v10.2.0 for "$PROJECT_ARG" project"
     elif [ "$PROJECT_ARG" == "is" ]; then
-      if grep -q "FREERTOS_VERSION   = freertos_v10.2.0" "$FILE"; then
-        echo "Modifying $FILE for IS project"
-        sed -i 's/^FREERTOS_VERSION   = freertos_v10.2.0/FREERTOS_VERSION   = freertos_v10.0.1/' "$FILE" || {
-          echo "Failed to modify $FILE" >&2
-          exit 1
-        }
-      fi
+      sed -i 's/^FREERTOS_VERSION   = freertos_v10.2.0/FREERTOS_VERSION   = freertos_v10.0.1/' "$FILE" && \
+      echo "Updated FreeRTOS to v10.0.1 for "$PROJECT_ARG" project"
     fi
   done
 }
 
 case "$AMEBA" in
-  amebaz2)
-    BASE_DIR="$AMEBAZ2_PROJECT"
-    MATTER_DIR="$MATTER_AMEBAZ2_DIR"
-    echo "Configuring for $AMEBA"
+  amebaz2|amebaz2plus)
+    BASE_DIR="$PROJECT_DIR"
+    echo "Configuring for $AMEBA..."
     delete_files
     modify_makefiles
-    ;;
-  amebaz2plus)
-    BASE_DIR="$AMEBAZPLUS_PROJECT"
-    MATTER_DIR="$MATTER_AMEBAZ2PLUS_DIR"
-    echo "Configuring for $AMEBA"
-    delete_files
-    modify_makefiles
-    ;;
-  amebad)
-    echo "Configuring for $AMEBA"
     ;;
   *)
-    echo "Invalid argument. Expected 'amebaz2', 'amebaz2plus', or 'amebad'."
+    echo "Invalid IC type. Expected: amebaz2 or amebaz2plus."
     exit 1
     ;;
 esac
