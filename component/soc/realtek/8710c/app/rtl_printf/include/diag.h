@@ -114,14 +114,14 @@ extern u32 ConfigDebugWarn;
 #endif
 
 #else
-#ifndef PLATFORM_MSMART
-#define dbg_printf                          rt_printfl
-#define dbg_sprintf                         rt_sprintfl
-#define dbg_snprintf                        rt_snprintfl
-#else
+#if defined(PLATFORM_MSMART) || (defined(CONFIG_OFF_LOG) && (CONFIG_OFF_LOG == 1))
 #define dbg_printf                          __wrap_printf
 #define dbg_sprintf                         __wrap_sprintf
 #define dbg_snprintf                        __wrap_snprintf
+#else
+#define dbg_printf                          rt_printfl
+#define dbg_sprintf                         rt_sprintfl
+#define dbg_snprintf                        rt_snprintfl
 #endif
 // Verifi mode, _DbgDump() for RAM Code
 #if defined(CONFIG_VRF_MODE) && (CONFIG_VRF_MODE==1)

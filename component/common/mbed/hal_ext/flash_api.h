@@ -289,6 +289,36 @@ void flash_mxic_exit_otp(void);
 */
 void flash_mxic_lock_otp(void);
 
+/**
+  * @brief  Read the value of Winbond flash's secure registers.
+    Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+  * @param  length: The read data length, maximum value is the size of status register, 256 bytes.
+  * @param  addr: The starting read address of the secure register, there are three secure registers
+                     WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+                     Input address could be WB_SECURITY_REGn_ADDR + offset, for offset < 256.
+  * @param  data: The destination address in memory to store secure register data returned by flash.
+  * @retval   none
+  */
+void flash_wb_secure_reg_read(u32 length, u32 addr, u8 *data);
+
+/**
+  * @brief  Erase target secure registers of Winbond flash. Not all Winbond flash supports secure registers, users should refer to datasheets for more details.
+  * @param  address: The address of the secure register, there are three secure registers
+                     WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+  * @retval   none
+  */
+void flash_wb_secure_reg_erase(u32 address);
+
+/**
+  * @brief  Program data into secure registers of Winbond flash. Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+  * @param  length: The program data length, each status register size is 256 bytes.
+  * @param  addr: The address of the secure register, there are three secure registers
+                     WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+                     Input address could be WB_SECURITY_REGn_ADDR + offset, for offset < 256.
+  * @param  data: The address of data. Data stored in ram is about to be programmed to the flash secure registers.
+  * @retval   none
+  */
+void flash_wb_secure_reg_program(u32 length, u32 addr, u8 *data);
 
 ///@}
 

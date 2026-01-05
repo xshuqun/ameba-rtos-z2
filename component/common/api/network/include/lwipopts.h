@@ -57,8 +57,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEM_SIZE                (23*1024)
 #elif defined(CONFIG_PLATFORM_8721D)
 #define MEM_SIZE    			  (7*1024)
-#elif defined(ENABLE_AMAZON_COMMON)
-#define MEM_SIZE                (10*1024)
 #else
 #define MEM_SIZE                (5*1024)
 #endif
@@ -95,8 +93,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define PBUF_POOL_SIZE          60 //for ping 10k test
 #elif defined(CONFIG_HIGH_TP_TEST) && CONFIG_HIGH_TP_TEST
 #define PBUF_POOL_SIZE          60
-#elif defined(ENABLE_AMAZON_COMMON)
-#define PBUF_POOL_SIZE          30
 #else
 #define PBUF_POOL_SIZE          20
 #endif
@@ -104,8 +100,6 @@ a lot of data that needs to be copied, this should be set high. */
 /* IP_REASS_MAX_PBUFS: Total maximum amount of pbufs waiting to be reassembled.*/
 #if WIFI_LOGO_CERTIFICATION_CONFIG
 #define IP_REASS_MAX_PBUFS              60 //for ping 10k test
-#elif defined(ENABLE_AMAZON_COMMON)
-#define IP_REASS_MAX_PBUFS              30
 #else
 #define IP_REASS_MAX_PBUFS              10
 #endif
@@ -145,8 +139,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_WND                 (8*TCP_MSS)
 #elif defined(CONFIG_PLATFORM_8721D)
 #define TCP_WND  			  (5*TCP_MSS)
-#elif defined(ENABLE_AMAZON_COMMON)
-#define TCP_WND                 (4*TCP_MSS)
 #else
 #define TCP_WND                 (2*TCP_MSS)
 #endif
@@ -268,13 +260,6 @@ extern unsigned int sys_now(void);
 #else
 #define LWIP_PROVIDE_ERRNO 1
 #endif
-#ifdef ENABLE_AMAZON_COMMON
-#undef LWIP_STATS
-#define LWIP_STATS 1
-#define LWIP_SNMP                  LWIP_UDP
-#define MIB2_STATS                 LWIP_SNMP
-#endif
-
 
 /*
    --------------------------------------
@@ -434,18 +419,6 @@ CONFIG_EXAMPLE_COAP_SERVER and CONFIG_EXAMPLE_COAP_CLIENT is defined in platform
 #endif
 #endif
 
-#if defined(ENABLE_AMAZON_COMMON)
-#define LWIP_COMPAT_MUTEX_ALLOWED
-#define ERRNO   1
-#define LWIP_SO_SNDTIMEO                1
-#define SYS_LIGHTWEIGHT_PROT    1
-#define SO_REUSE                        1
-#undef LWIP_TCPIP_CORE_LOCKING
-#undef LWIP_SOCKET_SET_ERRNO
-#define LWIP_TCPIP_CORE_LOCKING         1
-#define LWIP_SOCKET_SET_ERRNO           1
-#endif
-
 #if (defined(CONFIG_EXAMPLE_AZURE_IOTHUB_TELEMETRY) && (CONFIG_EXAMPLE_AZURE_IOTHUB_TELEMETRY)) \
       || (defined(CONFIG_EXAMPLE_AZURE_IOTHUB_X509) && (CONFIG_EXAMPLE_AZURE_IOTHUB_X509)) \
       || (defined(CONFIG_EXAMPLE_HTTP2_CLIENT) && (CONFIG_EXAMPLE_HTTP2_CLIENT)) \
@@ -457,6 +430,10 @@ CONFIG_EXAMPLE_COAP_SERVER and CONFIG_EXAMPLE_COAP_CLIENT is defined in platform
 
 #if defined(CONFIG_MATTER) && CONFIG_MATTER
 #include "lwipopts_matter.h"
+#endif
+
+#if defined(CONFIG_AMAZON_FREERTOS) && CONFIG_AMAZON_FREERTOS
+#include "lwipopts_aws.h"
 #endif
 
 #endif /* LWIP_HDR_LWIPOPTS_H */

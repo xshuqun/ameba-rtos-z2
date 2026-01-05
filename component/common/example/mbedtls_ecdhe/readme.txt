@@ -23,7 +23,16 @@ Setup Guide
 	[platform_opts.h]
 		#define CONFIG_EXAMPLE_MBEDTLS_ECDHE		1
 		#define CONFIG_EXAMPLE_WLAN_FAST_CONNECT 	0
-
+	For mbedtls version 3.1.0 and above
+	[mbedtls_config.h]
+		#define MBEDTLS_ECP_RESTARTABLE
+		#define MBEDTLS_ECDH_C
+		#define MBEDTLS_ECP_C
+		#define MBEDTLS_ENTROPY_C
+		#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+		#define MBEDTLS_ENTROPY_HARDWARE_ALT
+		#define MBEDTLS_NO_PLATFORM_ENTROPY
+		#define MBEDTLS_CTR_DRBG_C
 Parameter Setting and Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		

@@ -204,7 +204,12 @@ static void ssl_client_handler(void *param)
 			printf(" failed\n\r  ! ssl_config_defaults returned %d\n", ret);
 			goto exit;
 		}
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+		psa_crypto_init();
+#endif
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+		mbedtls_ssl_set_hostname(&ssl, server_host);
+#endif
 		mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_NONE);
 		mbedtls_ssl_conf_rng(&conf, my_random, NULL);
 
@@ -260,7 +265,11 @@ static void ssl_client_handler(void *param)
 		printf("\n\r  < Read from server %s:", server_host);
 
 		int read_size = 0, resource_size = 0, content_len = 0, header_removed = 0;
-		while ((read_size = mbedtls_ssl_read(&ssl, buf, sizeof(buf) - 1)) > 0) {
+		while (((read_size = mbedtls_ssl_read(&ssl, buf, sizeof(buf) - 1)) > 0)
+			   || ((read_size == MBEDTLS_ERR_SSL_WANT_READ) || (read_size == MBEDTLS_ERR_SSL_WANT_WRITE))) {
+			if ((read_size == MBEDTLS_ERR_SSL_WANT_READ) || (read_size == MBEDTLS_ERR_SSL_WANT_WRITE)) {
+				continue;
+			}
 			if (header_removed == 0) {
 				char *header = NULL;
 

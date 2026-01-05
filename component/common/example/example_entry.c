@@ -235,7 +235,7 @@
 #endif
 
 #if defined(CONFIG_EXAMPLE_AMAZON_FREERTOS) && (CONFIG_EXAMPLE_AMAZON_FREERTOS == 1)
-//#include <amazon_freertos/example_amazon_freertos.h>
+#include <example_amazon_freertos.h>
 #endif
 
 #if defined(CONFIG_EXAMPLE_MBEDTLS_ECDHE) && (CONFIG_EXAMPLE_MBEDTLS_ECDHE == 1)
@@ -509,7 +509,7 @@ void example_entry(void)
 #endif
 
 #if defined(CONFIG_EXAMPLE_AMAZON_FREERTOS) && (CONFIG_EXAMPLE_AMAZON_FREERTOS == 1)
-	//example_amazon_freertos();
+	example_amazon_freertos();
 #endif
 
 #if ((defined CONFIG_BT_MESH_PROVISIONER_RTK_DEMO && CONFIG_BT_MESH_PROVISIONER_RTK_DEMO) || (defined CONFIG_BT_MESH_DEVICE_RTK_DEMO && CONFIG_BT_MESH_DEVICE_RTK_DEMO))

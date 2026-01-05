@@ -1,7 +1,7 @@
 /** mbed Microcontroller Library
   ******************************************************************************
   * @file    pwmout_api.h
-  * @author 
+  * @author
   * @version V1.0.0
   * @brief   This file provides mbed pwm API
   ******************************************************************************
@@ -20,7 +20,7 @@
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
-  ****************************************************************************** 
+  ******************************************************************************
   */
 #ifndef MBED_PWMOUT_API_H
 #define MBED_PWMOUT_API_H
@@ -46,12 +46,12 @@ typedef struct pwmout_s pwmout_t;
   * @param  obj: PWM object define in application software.
   * @param  pin: the pinname of specified channel to be set.
   * @retval none
-  * @note  
+  * @note
   *             - default period: 1638us
   *             - default pulse width: 102us
   *             - default duty cycle: 6.227%
   */
-void pwmout_init(pwmout_t* obj, PinName pin);
+void pwmout_init(pwmout_t *obj, PinName pin);
 
 /**
   * @brief  Deinitializes the PWM device of the specified channel.
@@ -59,7 +59,7 @@ void pwmout_init(pwmout_t* obj, PinName pin);
   * @retval none
   * @note  If all channels are released, TIM5 will also be disabled.
   */
-void pwmout_free(pwmout_t* obj);
+void pwmout_free(pwmout_t *obj);
 
 /**
   * @brief  Set the duty cycle of the specified channel.
@@ -67,14 +67,14 @@ void pwmout_free(pwmout_t* obj);
   * @param  percent: The duty cycle value to be set.
   * @retval none
   */
-void pwmout_write(pwmout_t* obj, float percent);
+void pwmout_write(pwmout_t *obj, float percent);
 
 /**
   * @brief  Get the duty cycle value of the specified channel.
   * @param  obj: PWM object define in application software.
   * @retval : the duty cycle value of the specified channel.
   */
-float pwmout_read(pwmout_t* obj);
+float pwmout_read(pwmout_t *obj);
 
 /**
   * @brief  Set the period of the specified channel in seconds.
@@ -82,7 +82,7 @@ float pwmout_read(pwmout_t* obj);
   * @param  seconds: The period value to be set in seconds.
   * @retval none
   */
-void pwmout_period(pwmout_t* obj, float seconds);
+void pwmout_period(pwmout_t *obj, float seconds);
 
 /**
   * @brief  Set the period of the specified channel in millseconds.
@@ -90,7 +90,7 @@ void pwmout_period(pwmout_t* obj, float seconds);
   * @param  ms: The period value to be set in millseconds.
   * @retval none
   */
-void pwmout_period_ms(pwmout_t* obj, int ms);
+void pwmout_period_ms(pwmout_t *obj, int ms);
 
 /**
   * @brief  Set the period of the specified channel in microseconds.
@@ -98,7 +98,7 @@ void pwmout_period_ms(pwmout_t* obj, int ms);
   * @param  us: The period value to be set in microseconds.
   * @retval none
   */
-void pwmout_period_us(pwmout_t* obj, int us);
+void pwmout_period_us(pwmout_t *obj, int us);
 
 /**
   * @brief  Set the pulse width of the specified channel in seconds.
@@ -106,7 +106,7 @@ void pwmout_period_us(pwmout_t* obj, int us);
   * @param  seconds: The pulse width value to be set in seconds.
   * @retval none
   */
-void pwmout_pulsewidth(pwmout_t* obj, float seconds);
+void pwmout_pulsewidth(pwmout_t *obj, float seconds);
 
 /**
   * @brief  Set the pulse width of the specified channel in milliseconds.
@@ -114,7 +114,7 @@ void pwmout_pulsewidth(pwmout_t* obj, float seconds);
   * @param  ms: The pulse width value to be set in milliseconds.
   * @retval none
   */
-void pwmout_pulsewidth_ms(pwmout_t* obj, int ms);
+void pwmout_pulsewidth_ms(pwmout_t *obj, int ms);
 
 /**
   * @brief  Set the pulse width of the specified channel in microseconds.
@@ -122,7 +122,7 @@ void pwmout_pulsewidth_ms(pwmout_t* obj, int ms);
   * @param  us: The pulse width value to be set in microseconds.
   * @retval none
   */
-void pwmout_pulsewidth_us(pwmout_t* obj, int us);
+void pwmout_pulsewidth_us(pwmout_t *obj, int us);
 
 /**
   * @brief  Start the PWM device of the specified channel.
@@ -133,18 +133,18 @@ void pwmout_start(pwmout_t *obj);
 ///@}
 
 #if (defined(CONFIG_PLATFORM_8195BHP) && (CONFIG_PLATFORM_8195BHP == 1))  ||  (defined(CONFIG_PLATFORM_8195BLP) && (CONFIG_PLATFORM_8195BLP == 1))||  (defined(CONFIG_PLATFORM_8710C) && (CONFIG_PLATFORM_8710C == 1))
-///@name AmebaPro & AmebaZ2 
+///@name AmebaPro & AmebaZ2
 ///@{
 /**
   * @brief  Set the polarity of the specified PWM channel.
   * @param  obj: PWM object define in application software.
-  * @param  polarity: 
+  * @param  polarity:
   				0: Output low when timer count < setvalue.
   				1: Output high when timer count < setvalue.(default)
   * note: use before setting duty cycle or pulse width.
   * @retval none
   */
-void pwmout_set_polarity(pwmout_t* obj, int polarity);
+void pwmout_set_polarity(pwmout_t *obj, int polarity);
 #endif  // end of "#if defined(CONFIG_PLATFORM_8195BHP) || defined(CONFIG_PLATFORM_8195BLP) || (defined(CONFIG_PLATFORM_8710C)"
 ///@}
 

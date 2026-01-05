@@ -35,6 +35,9 @@
 
 extern hal_gpio_comm_adapter_t mbd_gpio_com_adp;
 extern uint32_t is_mbd_gpio_com_inited;
+#define MAX_PIN_MODE            4
+extern const uint8_t mbed_pinmode_map[];
+
 
 #if DEVICE_PORTIN || DEVICE_PORTOUT
 
@@ -99,15 +102,23 @@ void port_mode(port_t *obj, PinMode mode)
 	gpio_pin_t pin = {0};
 	uint32_t i;
 	uint32_t mask;
+	pin_pull_type_t pull_type;
 
 	phal_port = &obj->hal_port;
+
+	if (mode < MAX_PIN_MODE) {
+		pull_type = mbed_pinmode_map[mode];
+	} else {
+		// invalid pin mode
+		pull_type = Pin_PullNone;
+	}
 
 	pin.pin_name_b.port = phal_port->port_idx;
 	mask = phal_port->pin_mask;
 	for (i = 0; i < MAX_PIN_IN_PORT; i++) {
 		if (mask & (1 << i)) {
 			pin.pin_name_b.pin = i;
-			hal_gpio_pull_ctrl(pin.pin_name, mode);
+			hal_gpio_pull_ctrl(pin.pin_name, pull_type);
 		}
 	}
 }

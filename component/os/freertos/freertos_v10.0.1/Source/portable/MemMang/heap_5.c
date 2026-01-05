@@ -536,7 +536,7 @@ size_t xPortGetMinimumEverFreeHeapSize( void )
 size_t xPortGetTotalHeapSize( void )
 {
 	if(hal_get_flash_port_cfg() != FLASH_PORTB) // not a flash MCM package, so PSRAM on B port is possible
-	{ 
+	{
 		if(hal_lpcram_is_valid() == HAL_OK)
 		{
 #ifdef CONFIG_PLATFORM_Z2PLUS

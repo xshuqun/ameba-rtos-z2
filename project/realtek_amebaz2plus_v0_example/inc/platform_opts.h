@@ -36,17 +36,21 @@
 /**
 * For common flash usage
 */
-#define FLASH_BAKEUP_SECTOR		(0x3000)
-#define FAST_RECONNECT_DATA		(0x200000 - 0x1000)
-#define BT_FTL_PHY_ADDR0		(0x200000 - 0x2000)
-#define BT_FTL_PHY_ADDR1		(0x200000 - 0x3000)
-#define BT_FTL_BKUP_ADDR		(0x200000 - 0x4000)
-#define UART_SETTING_SECTOR		(0x200000 - 0x5000)
-#define DCT_BEGIN_ADDR			(0x200000 - 0x29000) /*!< DCT begin address of flash, ex: 0x200000 = 2M, the default size of DCT is 24K; ; if backup enabled, the size is 48k; if wear leveling enabled, the size is 144k*/
-#define FLASH_APP_BASE			(0x200000 - 0xA9000) /*!< FATFS begin address, default size used is 512KB (can be adjusted based on user requirement)*/
-#define BT_WHITELIST_BASE_1		(0x200000 - 0xA000)
-#define BT_WHITELIST_PAGE_SIZE		(0x1000)
-#define BT_WHITELIST_BASE_2		(BT_WHITELIST_BASE_1 + BT_WHITELIST_PAGE_SIZE)
+#define FLASH_BAKEUP_SECTOR         (0x3000)
+#define FAST_RECONNECT_DATA         (0x200000 - 0x1000)     //0x1FF000
+#define BT_FTL_PHY_ADDR0            (0x200000 - 0x2000)     //0x1FE000
+#define BT_FTL_PHY_ADDR1            (0x200000 - 0x3000)     //0x1FD000
+#define BT_FTL_BKUP_ADDR            (0x200000 - 0x4000)     //0x1FC000
+#define UART_SETTING_SECTOR         (0x200000 - 0x5000)     //0x1FB000
+#define BT_STATIC_RANDOM_ADDR       (0x200000 - 0x6000)     //0x1FA000
+#define BT_WHITELIST_BASE_2         (0x200000 - 0x9000)     //0x1F7000
+#define BT_WHITELIST_BASE_1         (0x200000 - 0xA000)     //0x1F6000
+#define BT_WHITELIST_PAGE_SIZE      (0x1000)
+/*!< DCT begin address of flash, ex: 0x200000 = 2M, the default size of DCT is 24K; ; if backup enabled, the size is 48k; if wear leveling enabled, the size is 144k*/
+#define DCT_BEGIN_ADDR              (0x200000 - 0x29000)    //0x1D7000
+/*!< FATFS begin address, default size used is 512KB (can be adjusted based on user requirement)*/
+#define FLASH_APP_BASE              (0x200000 - 0xA9000)    //0x157000
+
 /**
  * For Wlan configurations
  */

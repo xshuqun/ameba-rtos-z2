@@ -203,6 +203,7 @@ size_t xPortGetTotalHeapSize(void)
 #else
 		return configTOTAL_HEAP0_SIZE;
 #endif
+	}
 }
 /*-----------------------------------------------------------*/
 #endif

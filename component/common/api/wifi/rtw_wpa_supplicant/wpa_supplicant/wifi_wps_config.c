@@ -624,7 +624,7 @@ static rtw_result_t wps_scan_result_handler(rtw_scan_handler_result_t *malloced_
 
 #if CONFIG_ENABLE_WPS_DISCOVERY
 		if (((wps_arg->config_method == WPS_CONFIG_DISPLAY) || (wps_arg->config_method == WPS_CONFIG_KEYPAD))
-			&& (record->wps_type == 0x07)) {
+			&& (record->wps_type < 0x06)) {
 
 			update_discovered_ssids((char *)record->SSID.val);
 		}
@@ -662,8 +662,6 @@ static int wps_find_out_triger_wps_AP(char *target_ssid, u16 config_method)
 	if (rtw_down_timeout_sema(&wps_arg.scan_sema, SCAN_LONGEST_WAIT_TIME) == RTW_FALSE) {
 		printf("\r\nWPS scan done early!\r\n");
 	}
-	wifi_unreg_event_handler(WIFI_EVENT_SCAN_RESULT_REPORT, wifi_scan_each_report_hdl);
-	wifi_unreg_event_handler(WIFI_EVENT_SCAN_DONE, wifi_scan_done_hdl);
 
 exit:
 	rtw_free_sema(&wps_arg.scan_sema);

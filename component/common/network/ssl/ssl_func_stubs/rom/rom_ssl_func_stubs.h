@@ -19,7 +19,9 @@
 #include "mbedtls/ecdh.h"
 #include "mbedtls/ecdsa.h"
 #include "mbedtls/pk.h"
-#if CONFIG_MBEDTLS_VERSION3 != 1
+#include "mbedtls/version.h"
+
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER<0x03010000)
 #include "mbedtls/pk_internal.h"
 #include "mbedtls/arc4.h"
 #else
@@ -452,7 +454,7 @@ typedef struct ssl_func_stubs_s {
 	int (*mbedtls_ecjpake_derive_secret)(mbedtls_ecjpake_context *ctx, unsigned char *buf, size_t len, size_t *olen, int (*f_rng)(void *, unsigned char *, size_t),
 										 void *p_rng);
 	// arc4
-#if CONFIG_MBEDTLS_VERSION3 == 0
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER<0x03010000)
 	void (*mbedtls_arc4_init)(mbedtls_arc4_context *ctx);
 	void (*mbedtls_arc4_free)(mbedtls_arc4_context *ctx);
 	void (*mbedtls_arc4_setup)(mbedtls_arc4_context *ctx, const unsigned char *key, unsigned int keylen);

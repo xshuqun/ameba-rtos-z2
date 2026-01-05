@@ -217,6 +217,11 @@ void app_gap_vendor_callback(uint8_t cb_type, void *p_cb_data)
                             printf("Other lower stack exception!\r\n");
                     }
                     break;
+                case HCI_VENDOR_DUPLICATE_FILTER_FULL_EVENT:
+                    {
+                        printf("Scan duplicate filter is full\r\n");
+                    }
+                    break;
                 default:
                     break;
             }

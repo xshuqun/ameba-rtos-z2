@@ -11,7 +11,7 @@
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/platform.h>
-#if (CONFIG_MBEDTLS_VERSION3 != 1)
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER<0x03010000)
 #include "mbedtls/ssl_internal.h"
 #endif
 #define BUFSIZE         1024

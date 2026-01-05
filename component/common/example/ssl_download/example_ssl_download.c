@@ -28,9 +28,19 @@ extern void ssl_client_ext_free(void);
 #endif
 
 #define SERVER_HOST    "176.34.62.248"
+#define SERVER_HOST_NAME    "192.168.61.112"//set as CN
 #define SERVER_PORT    "443"
 #define RESOURCE       "/repository/IOT/Project_Cloud_A.bin"
 #define BUFFER_SIZE    2048
+#define DEBUG_LEVEL    0
+static void my_debug(void *ctx, int level, const char *file, int line, const char *str)
+{
+	/* To avoid gcc warnings */
+	(void) ctx;
+	(void) level;
+
+	printf("\n\r%s:%d: %s\n\r", file, line, str);
+}
 
 extern int rtw_get_random_bytes(void *dst, u32 size);
 static int my_random(void *p_rng, unsigned char *output, size_t output_len)
@@ -76,9 +86,17 @@ static void example_ssl_download_thread(void *param)
 
 	mbedtls_platform_set_calloc_free(my_calloc, vPortFree);
 
+#if defined(MBEDTLS_DEBUG_C)
+	mbedtls_debug_set_threshold(DEBUG_LEVEL);
+#endif
+
 	mbedtls_net_init(&server_fd);
 	mbedtls_ssl_init(&ssl);
 	mbedtls_ssl_config_init(&conf);
+
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+	mbedtls_ssl_set_hostname(&ssl, SERVER_HOST_NAME);
+#endif
 
 #ifdef SSL_CLIENT_EXT
 	if ((ret = ssl_client_ext_init()) != 0) {
@@ -103,8 +121,12 @@ static void example_ssl_download_thread(void *param)
 		goto exit;
 	}
 
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+	psa_crypto_init();
+#endif
 	mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_NONE);
 	mbedtls_ssl_conf_rng(&conf, my_random, NULL);
+	mbedtls_ssl_conf_dbg(&conf, my_debug, NULL);
 
 #ifdef SSL_CLIENT_EXT
 	if ((ret = ssl_client_ext_setup(&conf)) != 0) {
@@ -131,14 +153,15 @@ static void example_ssl_download_thread(void *param)
 		goto exit;
 	} else {
 		unsigned char buf[BUFFER_SIZE + 1];
-		int pos = 0, read_size = 0, resource_size = 0, content_len = 0, header_removed = 0;
+		int pos = 0, read_size = 0, resource_size = 0, content_len = 0;
 
 		printf("SSL ciphersuite %s\n", mbedtls_ssl_get_ciphersuite(&ssl));
 		sprintf((char *)buf, "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", RESOURCE, SERVER_HOST);
 		mbedtls_ssl_write(&ssl, buf, strlen((char *)buf));
 
-		while ((read_size = mbedtls_ssl_read(&ssl, buf + pos, BUFFER_SIZE - pos)) > 0) {
-			if (header_removed == 0) {
+		while (((read_size = mbedtls_ssl_read(&ssl, buf + pos, BUFFER_SIZE - pos)) > 0) || (read_size == MBEDTLS_ERR_SSL_WANT_READ) ||
+			   (read_size == MBEDTLS_ERR_SSL_WANT_WRITE)) {
+			if (read_size > 0) {
 				char *header = NULL;
 
 				pos += read_size;
@@ -150,7 +173,7 @@ static void example_ssl_download_thread(void *param)
 
 					body = header + strlen("\r\n\r\n");
 					*(body - 2) = 0;
-					header_removed = 1;
+
 					printf("\nHTTP Header: %s\n", buf);
 
 					// Remove header size to get first read size of data from body head

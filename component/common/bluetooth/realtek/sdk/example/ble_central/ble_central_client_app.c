@@ -27,7 +27,6 @@
 #include <gap_msg.h>
 #include <gap_bond_le.h>
 #include <ble_central_client_app.h>
-#include <ble_central_link_mgr.h>
 #include <gcs_client.h>
 #include "ble_central_at_cmd.h"
 
@@ -38,6 +37,9 @@
 /*============================================================================*
  *                              Variables
  *============================================================================*/
+/** @brief  App link table */
+static T_APP_LINK  ble_central_app_link_table[BLE_CENTRAL_APP_MAX_LINKS];
+
 /** @addtogroup  CENTRAL_CLIIENT_CALLBACK
     * @{
     */
@@ -119,6 +121,13 @@ void ble_central_app_handle_dev_state_evt(T_GAP_DEV_STATE new_state, uint16_t ca
             printf("[%s]le_gen_rand_addr result = %x\n\r",__func__,result);
             result = le_set_rand_addr(bt_addr);
             printf("[%s]le_set_rand_addr result = %x\n\r",__func__,result);
+            printf("random bd addr: 0x%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+                            bt_addr[5],
+                            bt_addr[4],
+                            bt_addr[3],
+                            bt_addr[2],
+                            bt_addr[1],
+                            bt_addr[0]);
             memset(bt_addr,0,sizeof(uint8_t)*6);
 #endif
             /*stack ready*/

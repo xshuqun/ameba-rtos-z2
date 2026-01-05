@@ -28,7 +28,6 @@
 #include <gap_msg.h>
 #include <gap_bond_le.h>
 #include <ble_scatternet_app.h>
-#include <ble_scatternet_link_mgr.h>
 #include <gcs_client.h>
 #include "platform_opts_bt.h"
 #include "gatt_builtin_services.h"
@@ -55,6 +54,15 @@ T_CLIENT_ID   ble_scatternet_gcs_client_id;         /**< General Common Services
 T_GAP_DEV_STATE ble_scatternet_gap_dev_state = {0, 0, 0, 0, 0};                /**< GAP device state */
 int ble_scatternet_peripheral_app_max_links = 0;
 int ble_scatternet_central_app_max_links = 0;
+
+/** @addtogroup  CENTRAL_CLIENT_GAP_MSG
+    * @{
+    */
+
+/** @brief  App link table */
+static T_APP_LINK ble_scatternet_app_link_table[BLE_SCATTERNET_APP_MAX_LINKS];
+/** @} */
+
 /*============================================================================*
  *                              Functions
  *============================================================================*/
@@ -130,6 +138,13 @@ void ble_scatternet_app_handle_dev_state_evt(T_GAP_DEV_STATE new_state, uint16_t
             printf("[%s]le_gen_rand_addr result = %x\r\n",__func__,result);
             result = le_set_rand_addr(bt_addr);
             printf("[%s]le_set_rand_addr result = %x\r\n",__func__,result);
+            printf("random bd addr: 0x%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+                            bt_addr[5],
+                            bt_addr[4],
+                            bt_addr[3],
+                            bt_addr[2],
+                            bt_addr[1],
+                            bt_addr[0]);
             memset(bt_addr,0,sizeof(uint8_t)*6);
 #endif
             /*stack ready*/

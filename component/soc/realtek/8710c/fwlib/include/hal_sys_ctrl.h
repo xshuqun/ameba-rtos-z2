@@ -59,6 +59,20 @@ typedef enum chk_core_pwr_cali_status{
 chk_core_pwr_cali_status_t hal_efuse_check_core_pwr_cali_status (void);
 #endif
 
+enum efuse_phy_ctrl_id_e {
+    PHY_CTRL_SB_ID          = 0x9E,
+    PHY_CTRL_DBG_ID         = 0xAD,
+    PHY_CTRL_PG_ID          = 0xBC,
+    PHY_CTRL_PG_BD_ID       = 0xCB,
+    PHY_CTRL_NORM_PG_ID     = 0xDA,
+	PHY_CTRL_SBTB_ID		= 0xE9	
+
+};
+
+enum dev_lfc_state_cfg_id_e {
+    LfC_Chip_Manufactur_ID  = 0x9E,
+    LfC_Deployed_ID         = 0xAD
+};
 
 /**
  * @brief  define debug port mode.
@@ -245,9 +259,13 @@ void hal_sys_ctrl_core_pwr_efuse_pg_recover(uint8_t pwr_sts);
 #if !defined(CONFIG_BUILD_NONSECURE)
 // Build for Secure/Ignore-Secure
 
-void hal_sys_life_cycle_state_read (uint8_t *pstate);
+hal_status_t hal_sys_life_cycle_state_read (uint8_t *pstate);
 
-hal_status_t hal_sys_life_cycle_state_write (const uint8_t w_state);
+hal_status_t hal_sys_life_cycle_state_config (const uint8_t lfc_cfg_id);
+
+hal_status_t hal_sys_phy_ctrl_chk_sts (uint8_t phy_ctrl_id, uint8_t *pstate);
+
+hal_status_t hal_sys_phy_ctrl_config_sec_ctrl (uint8_t phy_ctrl_id);
 
 /** 
  *  @brief Configures debuger port setting.
@@ -265,7 +283,10 @@ hal_status_t hal_dbg_port_cfg(dbg_port_mode_t dbg_mode);
 #else   // else of "#if !defined(CONFIG_BUILD_NONSECURE)"
 
 #define hal_sys_life_cycle_state_read   hal_sys_life_cycle_state_read_nsc
-#define hal_sys_life_cycle_state_write  hal_sys_life_cycle_state_write_nsc
+
+#define hal_sys_phy_ctrl_chk_sts hal_sys_phy_ctrl_chk_sts_nsc
+
+#define hal_sys_phy_ctrl_config_sec_ctrl hal_sys_phy_ctrl_config_sec_ctrl_nsc
 
 // Build for Non-Secure
 hal_status_t hal_dbg_port_cfg_nsc (dbg_port_mode_t dbg_mode);
@@ -275,9 +296,9 @@ hal_status_t hal_dbg_port_cfg_nsc (dbg_port_mode_t dbg_mode);
 #endif  // end of else of "#if !defined(CONFIG_BUILD_NONSECURE)"
 
 #if defined(CONFIG_BUILD_SECURE)
-void NS_ENTRY hal_sys_life_cycle_state_read_nsc(uint8_t *pstate);
-
-hal_status_t NS_ENTRY hal_sys_life_cycle_state_write_nsc(const uint8_t w_state);
+hal_status_t NS_ENTRY hal_sys_life_cycle_state_read_nsc(uint8_t *pstate);
+hal_status_t NS_ENTRY hal_sys_phy_ctrl_chk_sts_nsc (uint8_t phy_ctrl_id, uint8_t *pstate);
+hal_status_t NS_ENTRY hal_sys_phy_ctrl_config_sec_ctrl_nsc (uint8_t phy_ctrl_id);
 #endif
 
 /** 

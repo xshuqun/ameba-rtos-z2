@@ -233,4 +233,3 @@ void ble_matter_adapter_app_task_deinit(void)
 
 /** @} */ /* End of group CENTRAL_CLIENT_APP_TASK */
 #endif
-

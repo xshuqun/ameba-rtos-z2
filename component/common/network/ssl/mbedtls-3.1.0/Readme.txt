@@ -1,8 +1,6 @@
 Changes of switching to mbedtls-3.1.0 :
 
-1. In platform_opts.h:  #define CONFIG_MBEDTLS_VERSION3	1
-
-2. In application.is.mk
+1. In application.is.mk
  -INCLUDES += -I../../../component/common/network/ssl/mbedtls-2.4.0/include
 +INCLUDES += -I../../../component/common/network/ssl/mbedtls-3.1.0/include
 +INCLUDES += -I../../../component/common/network/ssl/mbedtls-3.1.0/library

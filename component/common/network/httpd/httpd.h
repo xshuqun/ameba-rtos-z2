@@ -63,6 +63,7 @@ struct http_request {
   */
 struct httpd_conn {
 	int sock;                        /*!< Client socket descriptor for connection */
+	unsigned int ip4_addr;           /*!< Client ip4 address */
 	struct http_request request;     /*!< Context for HTTP request */
 	void *tls;                       /*!< Context for TLS connection */
 	uint8_t *response_header;        /*!< Pointer to transmission buffer of HTTP response header */
@@ -170,7 +171,11 @@ void httpd_conn_close(struct httpd_conn *conn);
 
 /**
  * @brief     This function is used to dump the parsed HTTP header of request in connection context.
- * @param[in] conn: pointer to connection context
+ * @param[in] conn: pointer to connection context. The data that can be stored in the following each arguments is 99 bytes or less.
+ *                  conn->request.method
+ *                  conn->request.path
+ *                  conn->request.host
+ *                  conn->request.content_type
  * @return    None
  */
 void httpd_conn_dump_header(struct httpd_conn *conn);
@@ -190,6 +195,7 @@ int httpd_request_is_method(struct httpd_conn *conn, char *method);
  * @return    0 : if successful
  * @return    -1 : if error occurred
  * @note      httpd_request_read_header() is automatically invoked by httpd server to parse request before executing page callback
+ * @note      Set only decimal numbers (0 to 9) in the Content-Length information.
  */
 int httpd_request_read_header(struct httpd_conn *conn);
 
@@ -205,7 +211,7 @@ int httpd_request_read_data(struct httpd_conn *conn, uint8_t *data, size_t data_
 /**
  * @brief      This function is used to get a header field from HTTP header of connection context.
  * @param[in]  conn: pointer to connection context
- * @param[in]  field: header field string to search
+ * @param[in]  field: header field string to search is 48 bytes or less.
  * @param[out] value: search result stored in memory allocated
  * @return    0 : if found
  * @return    -1 : if not found
@@ -227,8 +233,8 @@ int httpd_request_get_query_key(struct httpd_conn *conn, char *key, char **value
 /**
  * @brief      This function is used to start a HTTP response in connection.
  * @param[in]  conn: pointer to connection context
- * @param[in]  status: string of status code in HTTP response
- * @param[in]  content_type: string of Content-Type header field written to HTTP response. No Content-Type in HTTP response if NULL.
+ * @param[in]  status: string of status code in HTTP response is 188 bytes or less.
+ * @param[in]  content_type: string of Content-Type header field written to HTTP response is 183 bytes or less. No Content-Type in HTTP response if NULL.
  * @param[in]  content_len: value of Content-Length header field written to HTTP response. No Content-Length in HTTP response if NULL.
  * @return     0 : if successful
  * @return     -1 : if error occurred
@@ -238,8 +244,8 @@ int httpd_response_write_header_start(struct httpd_conn *conn, char *status, cha
 /**
  * @brief      This function is used to add an HTTP header field to HTTP response.
  * @param[in]  conn: pointer to connection context
- * @param[in]  name: HTTP header field name string
- * @param[in]  value: HTTP header field value
+ * @param[in]  name: HTTP header field name string. Data that can be stored is 195 bytes or less in total with param value.
+ * @param[in]  value: HTTP header field value. Data that can be stored is 195 bytes or less in total with param name.
  * @return     0 : if successful
  * @return     -1 : if error occurred
  */
@@ -279,7 +285,8 @@ void httpd_response_unauthorized(struct httpd_conn *conn, char *msg);
 
 /**
  * @brief      This function is used to write a default HTTP response for error of 404 Not Found.
- * @param[in]  conn: pointer to connection context
+ * @param[in]  conn: pointer to connection context. The data that can be stored in the following arguments is 183 bytes or less.
+ *                   conn->request.path
  * @param[in]  msg: message write to HTTP response body. A default message will be used if NULL.
  * @return     None
  */
@@ -287,7 +294,8 @@ void httpd_response_not_found(struct httpd_conn *conn, char *msg);
 
 /**
  * @brief      This function is used to write a default HTTP response for error of 405 Method Not Allowed.
- * @param[in]  conn: pointer to connection context
+ * @param[in]  conn: pointer to connection context. The data that can be stored in the following arguments is 30 bytes or less.
+ *                   conn->request.method
  * @param[in]  msg: message write to HTTP response body. A default message will be used if NULL.
  * @return     None
  */

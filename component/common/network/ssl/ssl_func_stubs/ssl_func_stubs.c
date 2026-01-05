@@ -400,7 +400,7 @@ int platform_set_malloc_free(
 	rom_ssl_ram_map.use_hw_crypto_func = 1;
 #endif
 
-#if defined(CONFIG_PLATFORM_8710C) && ((defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100)))
+#if defined(CONFIG_PLATFORM_8710C) && ((defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x03060100 || MBEDTLS_VERSION_NUMBER == 0x02040000 || MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100)))
 	//AES HW CRYPTO
 	rtl_cryptoEngine_init();
 	rom_ssl_ram_map.hw_crypto_aes_ecb_init = rtl_crypto_aes_ecb_init;
@@ -409,16 +409,16 @@ int platform_set_malloc_free(
 	rom_ssl_ram_map.hw_crypto_aes_cbc_init = rtl_crypto_aes_cbc_init;
 	rom_ssl_ram_map.hw_crypto_aes_cbc_decrypt = rtl_crypto_aes_cbc_decrypt;
 	rom_ssl_ram_map.hw_crypto_aes_cbc_encrypt = rtl_crypto_aes_cbc_encrypt;
+	rom_ssl_ram_map.hw_crypto_aes_gcm_init = rtl_crypto_aes_gcm_init;
+	rom_ssl_ram_map.hw_crypto_aes_gcm_encrypt = rtl_crypto_aes_gcm_encrypt;
+	rom_ssl_ram_map.hw_crypto_aes_gcm_decrypt = rtl_crypto_aes_gcm_decrypt;
 #endif
-#if (defined(MBEDTLS_VERSION_NUMBER) && MBEDTLS_VERSION_NUMBER == 0x02040000) || ((defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100)) && (defined(MBEDTLS_USE_ROM_API) || defined(MBEDTLS_BIGNUM_USE_S_ROM_API)))
+#if (defined(MBEDTLS_VERSION_NUMBER) && MBEDTLS_VERSION_NUMBER==0x03060100 || MBEDTLS_VERSION_NUMBER == 0x02040000) || ((defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100)) && (defined(MBEDTLS_USE_ROM_API) || defined(MBEDTLS_BIGNUM_USE_S_ROM_API)))
 #if defined(MBEDTLS_BIGNUM_USE_S_ROM_API)
 	if ((*((volatile u32 *)(0x400001F0)) & (BIT4 | BIT5 | BIT6 | BIT7)) >> 4 >= 0x3) {
 		init_rom_ssl_ram_map(ssl_calloc, ssl_free, NULL, rom_ssl_ram_map.use_hw_crypto_func);
 		init_rom_ssl_hw_crypto_aes_ecb(rtl_crypto_aes_ecb_init, rtl_crypto_aes_ecb_decrypt, rtl_crypto_aes_ecb_encrypt);
 		init_rom_ssl_hw_crypto_aes_cbc(rtl_crypto_aes_cbc_init, rtl_crypto_aes_cbc_decrypt, rtl_crypto_aes_cbc_encrypt);
-		rom_ssl_ram_map.hw_crypto_aes_gcm_init = rtl_crypto_aes_gcm_init;
-		rom_ssl_ram_map.hw_crypto_aes_gcm_encrypt = rtl_crypto_aes_gcm_encrypt;
-		rom_ssl_ram_map.hw_crypto_aes_gcm_decrypt = rtl_crypto_aes_gcm_decrypt;
 		__bignum_stubs_init_rom();
 	} else {
 		__bignum_stubs_init_ram();
@@ -427,15 +427,12 @@ int platform_set_malloc_free(
 	init_rom_ssl_ram_map(ssl_calloc, ssl_free, NULL, rom_ssl_ram_map.use_hw_crypto_func);
 	init_rom_ssl_hw_crypto_aes_ecb(rtl_crypto_aes_ecb_init, rtl_crypto_aes_ecb_decrypt, rtl_crypto_aes_ecb_encrypt);
 	init_rom_ssl_hw_crypto_aes_cbc(rtl_crypto_aes_cbc_init, rtl_crypto_aes_cbc_decrypt, rtl_crypto_aes_cbc_encrypt);
-	rom_ssl_ram_map.hw_crypto_aes_gcm_init = rtl_crypto_aes_gcm_init;
-	rom_ssl_ram_map.hw_crypto_aes_gcm_encrypt = rtl_crypto_aes_gcm_encrypt;
-	rom_ssl_ram_map.hw_crypto_aes_gcm_decrypt = rtl_crypto_aes_gcm_decrypt;
 #endif
 #endif
 #if defined(CONFIG_PLATFORM_8710C)
 	/// DES funtions are on longer supported on AmebaZ2's HW crypto
 	/// Must set them to NULL, so it will use SW instead of HW even use_hw_crypto_func is enabled
-#if (defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100) && defined(MBEDTLS_USE_ROM_API))
+#if (defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x03060100 || MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100) && defined(MBEDTLS_USE_ROM_API))
 	//DES HW CRYPTO
 	rom_ssl_ram_map.hw_crypto_des_cbc_init = NULL;
 	rom_ssl_ram_map.hw_crypto_des_cbc_decrypt = NULL;
@@ -444,7 +441,7 @@ int platform_set_malloc_free(
 	rom_ssl_ram_map.hw_crypto_3des_cbc_decrypt = NULL;
 	rom_ssl_ram_map.hw_crypto_3des_cbc_encrypt = NULL;
 #endif
-#if (defined(MBEDTLS_VERSION_NUMBER) && MBEDTLS_VERSION_NUMBER == 0x02040000) || ((defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100)) && defined(MBEDTLS_USE_ROM_API))
+#if (defined(MBEDTLS_VERSION_NUMBER) && MBEDTLS_VERSION_NUMBER==0x03060100 || MBEDTLS_VERSION_NUMBER == 0x02040000) || ((defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100)) && defined(MBEDTLS_USE_ROM_API))
 	init_rom_ssl_hw_crypto_des_cbc(NULL, NULL, NULL);
 	init_rom_ssl_hw_crypto_3des_cbc(NULL, NULL, NULL);
 #endif
@@ -2194,7 +2191,7 @@ int mbedtls_pk_verify_restartable(mbedtls_pk_context *ctx,
 	return __rom_stubs_ssl.mbedtls_pk_verify(ctx, md_alg, hash, hash_len, sig, sig_len);
 }
 #endif /* MBEDTLS_USE_ROM_API */
-#if defined(ENABLE_AMAZON_COMMON) || (defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100))
+#if (defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x02100300 || MBEDTLS_VERSION_NUMBER==0x021C0000 || MBEDTLS_VERSION_NUMBER==0x021C0100))
 #if !defined(SUPPORT_HW_SSL_HMAC_SHA256)
 /* sha256 */
 int mbedtls_sha256_starts_ret(mbedtls_sha256_context *ctx, int is224)
@@ -2223,11 +2220,5 @@ int mbedtls_sha256_ret(const unsigned char *input, size_t ilen, unsigned char ou
 	return 0;
 }
 #endif /* !SUPPORT_HW_SSL_HMAC_SHA256 */
-#endif
-#if defined(ENABLE_AMAZON_COMMON) && (defined(MBEDTLS_VERSION_NUMBER) && MBEDTLS_VERSION_NUMBER == 0x02040000)
-void mbedtls_platform_zeroize(void *buf, size_t len)
-{
-	memset(buf, 0, len);
-}
 #endif
 #endif

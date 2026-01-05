@@ -910,7 +910,9 @@ int update_ota_https_connect_server(mbedtls_net_context *server_fd, mbedtls_ssl_
 	mbedtls_net_init(server_fd);
 	mbedtls_ssl_init(ssl);
 	mbedtls_ssl_config_init(conf);
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+	psa_crypto_init();
+#endif
 #ifdef SSL_CLIENT_EXT
 	if ((ret = ssl_client_ext_init()) != 0) {
 		printf("\n\r[%s] ssl_client_ext_init failed, ret(%d)\n", __FUNCTION__, ret);

@@ -4,16 +4,6 @@
 #include "osdep_service.h"
 #include <lwip/sockets.h>
 #include "httpc.h"
-
-#if CONFIG_MBEDTLS_VERSION3 == 1
-#include "mbedtls/build_info.h"
-#else
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
-#endif
 #include "mbedtls/ssl.h"
 #include "mbedtls/platform.h"
 #include "mbedtls/net_sockets.h"
@@ -22,6 +12,16 @@
 #include "mbedtls/error.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/version.h"
+
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
+#include "mbedtls/build_info.h"
+#else
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+#endif
 
 struct httpc_tls {
 	mbedtls_ssl_context ctx;         /*!< Context for mbedTLS */
@@ -113,7 +113,9 @@ void *httpc_tls_new(int *sock, char *client_cert, char *client_key, char *ca_cer
 #endif
 		mbedtls_ssl_init(ssl);
 		mbedtls_ssl_config_init(conf);
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+		psa_crypto_init();
+#endif
 		if ((ret = mbedtls_ssl_config_defaults(conf,
 											   MBEDTLS_SSL_IS_CLIENT,
 											   MBEDTLS_SSL_TRANSPORT_STREAM,
@@ -150,7 +152,7 @@ void *httpc_tls_new(int *sock, char *client_cert, char *client_key, char *ca_cer
 			}
 #else
 
-#if CONFIG_MBEDTLS_VERSION3 == 1
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 			if ((ret = mbedtls_pk_parse_key(&tls->key, (const unsigned char *) client_key, strlen(client_key) + 1, NULL, 0, rtw_get_random_bytes_f_rng, 1)) != 0) {
 #else
 			if ((ret = mbedtls_pk_parse_key(&tls->key, (const unsigned char *) client_key, strlen(client_key) + 1, NULL, 0)) != 0) {

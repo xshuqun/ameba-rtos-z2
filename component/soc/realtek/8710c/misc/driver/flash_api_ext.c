@@ -130,7 +130,7 @@ int flash_register_check_and_unlock(void)
 			flash_set_status3(&flash, SR3 & ~(BIT2));
 		}
 		//read SR3 back
-		SR2 = flash_get_status3(&flash);
+		SR3 = flash_get_status3(&flash);
 		if (SR3 & (BIT2)) {
 			dbg_printf("[%s] set SR3 failed\r\n", __func__);
 			return -1;

@@ -91,7 +91,7 @@ void TimerCountdown(Timer* timer, unsigned int timeout)
 int TimerLeftMS(Timer* timer) 
 {
 	xTaskCheckForTimeOut(&timer->xTimeOut, &timer->xTicksToWait); /* updates xTicksToWait to the number left */
-	return (timer->xTicksToWait * portTICK_PERIOD_MS);
+	return (((timer->xTicksToWait == 0) ? 1 : timer->xTicksToWait) * portTICK_PERIOD_MS);
 }
 
 
@@ -454,7 +454,7 @@ int NetworkConnect(Network* n, char* addr, int port)
 			}
 #else
 
-#if CONFIG_MBEDTLS_VERSION3 == 1
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 			if ( mbedtls_pk_parse_key(client_rsa, (const unsigned char *)n->private_key, strlen(n->private_key)+1, NULL, 0, rtw_get_random_bytes_f_rng, 1 ) != 0 )
 #else
 			if ( mbedtls_pk_parse_key(client_rsa, (const unsigned char *)n->private_key, strlen(n->private_key)+1, NULL, 0) != 0 )

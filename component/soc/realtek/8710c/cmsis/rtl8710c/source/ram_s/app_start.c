@@ -230,7 +230,7 @@ void start_random_seed()
 }
 #endif
 
-#ifdef ENABLE_AMAZON_COMMON
+#if (defined(CONFIG_AMAZON_FREERTOS) && CONFIG_AMAZON_FREERTOS)
 __weak void os_heap_init(void) { /* default os_heap_init, for FreeRTOS heap5 */ }
 #endif
 
@@ -238,7 +238,7 @@ void app_start (void)
 {
 	dbg_printf ("Build @ %s, %s\r\n", __TIME__, __DATE__);
 
-#ifdef ENABLE_AMAZON_COMMON
+#if (defined(CONFIG_AMAZON_FREERTOS) && CONFIG_AMAZON_FREERTOS)
 	os_heap_init();
 #endif
 

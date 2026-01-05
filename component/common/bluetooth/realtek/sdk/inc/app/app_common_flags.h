@@ -18,6 +18,18 @@
 /** @brief  Config local address type: 0-pulic address, 1-static random address, 2-random resolvable private address */
 #define F_BT_LE_USE_RANDOM_ADDR             0
 
+/** @brief  Config acknowlegment: 0-Unknown and unchanged, 1-Acknowledged and Ensured no overlap with fw2 image. */
+#define F_BT_STATIC_RANDOM_ADDR_CUSTOM      0
+
+#if (F_BT_LE_USE_RANDOM_ADDR==1)
+#if (F_BT_STATIC_RANDOM_ADDR_CUSTOM==0)
+#error "The BT_STATIC_RANDOM_ADDR is defined and adjustable in platform_opts.h. \
+The Firmware 2 (fw2) image length can be adjusted based on its size, as specified in partition.json. \
+Please ensure that the defined BT_STATIC_RANDOM_ADDR does not overlap with the fw2 image region before setting F_BT_STATIC_RANDOM_ADDR_CUSTOM to 1. \
+For more details, refer to the Application Note, Section: Flash Memory Layout."
+#endif /* F_BT_STATIC_RANDOM_ADDR_CUSTOM */
+#endif
+
 /** @brief  Config device name characteristic and appearance characteristic property: 0-Not writeable, 1-writeable, save to flash*/
 #define F_BT_GAPS_CHAR_WRITEABLE            0
 
@@ -31,4 +43,5 @@
 #if defined(CONFIG_MATTER) && ( CONFIG_MATTER==1 )
 #include <app_common_flags_matter.h>
 #endif
+
 #endif

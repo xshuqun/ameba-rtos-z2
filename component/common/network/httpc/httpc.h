@@ -129,6 +129,28 @@ void httpc_enable_ignore_content_len(struct httpc_conn *conn);
 void httpc_set_http_1_0_request_used(uint8_t used);
 
 /**
+ * @brief     This function is used to enable TCP socket KEEPALIVE
+ * @param[in] enable : 0 to disable keepalive, 1 to enable keepalive.
+ * @param[in] keepidle_interval : Specifies the idle time before TCP starts sending keepalive probes on a connection; the unit is seconds.
+ * @param[in] keepalive_interval : Specifies the interval between successive keepalive probes if no acknowledgment is received; the unit is seconds.
+ * @param[in] keepalive_count :  Specifies the maximum number of keepalive probes TCP will send before dropping the connection if no response is received.
+ * @return    None
+ * @note      This function should be called before httpc_conn_connect() if you want to enable keepalive.
+ */
+void httpc_enable_keepalive(uint8_t enable, int keepidle_interval, int keepalive_interval, int keepalive_count);
+
+/**
+ * @brief	  This function is used to configure the send timeout for a TCP socket.
+ * @param[in] enable : 0 to disable the send timeout, 1 to enable the send timeout.
+ * @param[in] send_timeout : The timeout duration for send operations, in milliseconds. If 'enable' is 0, this value is ignored.
+ * @return    None
+ * @note	  This function should be called before httpc_conn_connect() if you want to enable socket send timeout.
+ * @note	  Should define LWIP_SO_SNDTIMEO to 1 in lwipopts.h
+ */
+void httpc_setup_send_timeout(uint8_t enable, int send_timeout);
+
+
+/**
  * @brief     This function is used to free memory allocated by httpc API, such as httpc_response_get_header_field().
  * @param[in] ptr: pointer to memory to be deallocated
  * @return    None
@@ -137,7 +159,9 @@ void httpc_free(void *ptr);
 
 /**
  * @brief     This function is used to dump the parsed HTTP header of response in connection context.
- * @param[in] conn: pointer to connection context
+ * @param[in] conn: pointer to connection context. The data that can be stored in the following each arguments is 99 bytes or less.
+ *                  conn->response.status
+ *                  conn->response.content_type
  * @return    None
  */
 void httpc_conn_dump_header(struct httpc_conn *conn);

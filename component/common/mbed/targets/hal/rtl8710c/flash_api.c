@@ -801,3 +801,72 @@ void flash_mxic_lock_otp(void)
 	spic_tx_cmd_no_check(phal_spic_adaptor, (phal_spic_adaptor->cmd)->wrdi, 0, 0);
 }
 
+/**
+  * @brief  Read the value of Winbond flash's secure registers.
+    Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+  * @param  length: The read data length, maximum value is the size of status register, 256 bytes.
+  * @param  addr: The starting read address of the secure register, there are three secure registers
+                     WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+                     Input address could be WB_SECURITY_REGn_ADDR + offset, for offset < 256.
+  * @param  data: The destination address in memory to store secure register data returned by flash.
+  * @retval   none
+  */
+void flash_wb_secure_reg_read(u32 length, u32 addr, u8 *data)
+{
+	phal_spic_adaptor_t phal_spic_adaptor;
+
+	if (pglob_spic_adaptor == NULL) {
+		spic_init(&hal_spic_adaptor, SpicQuadIOMode, &flash_pin_sel);
+	}
+
+	phal_spic_adaptor = pglob_spic_adaptor;
+
+	flash_resource_lock();
+	hal_flash_wb_secure_reg_read(phal_spic_adaptor, length, addr, data);
+	flash_resource_unlock();
+}
+
+/**
+  * @brief  Erase target secure registers of Winbond flash. Not all Winbond flash supports secure registers, users should refer to datasheets for more details.
+  * @param  address: The address of the secure register, there are three secure registers
+                     WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+  * @retval   none
+  */
+void flash_wb_secure_reg_erase(u32 address)
+{
+	phal_spic_adaptor_t phal_spic_adaptor;
+
+	if (pglob_spic_adaptor == NULL) {
+		spic_init(&hal_spic_adaptor, SpicQuadIOMode, &flash_pin_sel);
+	}
+
+	phal_spic_adaptor = pglob_spic_adaptor;
+
+	flash_resource_lock();
+	hal_flash_wb_secure_reg_erase(phal_spic_adaptor, address);
+	flash_resource_unlock();
+}
+
+/**
+  * @brief  Program data into secure registers of Winbond flash. Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+  * @param  length: The program data length, each status register size is 256 bytes.
+  * @param  addr: The address of the secure register, there are three secure registers
+                     WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+                     Input address could be WB_SECURITY_REGn_ADDR + offset, for offset < 256.
+  * @param  data: The address of data. Data stored in ram is about to be programmed to the flash secure registers.
+  * @retval   none
+  */
+void flash_wb_secure_reg_program(u32 length, u32 addr, u8 *data)
+{
+	phal_spic_adaptor_t phal_spic_adaptor;
+
+	if (pglob_spic_adaptor == NULL) {
+		spic_init(&hal_spic_adaptor, SpicQuadIOMode, &flash_pin_sel);
+	}
+
+	phal_spic_adaptor = pglob_spic_adaptor;
+
+	flash_resource_lock();
+	hal_flash_wb_secure_reg_program(phal_spic_adaptor, length, addr, data);
+	flash_resource_unlock();
+}

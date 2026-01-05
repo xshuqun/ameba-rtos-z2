@@ -1178,6 +1178,15 @@ void wext_wlan_indicate(unsigned int cmd, union iwreq_data *wrqu, char *extra)
 			} else if (!memcmp(IW_EVT_STR_NO_BEACON, extra, strlen(IW_EVT_STR_NO_BEACON))) {
 				wifi_indication(WIFI_EVENT_NO_BEACON, extra, strlen(IW_EVT_STR_NO_BEACON), 0);
 			}
+#if defined(CONFIG_AP_MODE)
+			else if (!memcmp(IW_EVT_STR_STA_ASSOC, extra, strlen(IW_EVT_STR_STA_ASSOC))) {
+				wifi_indication(WIFI_EVENT_STA_ASSOC, wrqu->data.pointer, wrqu->data.length, 0);
+			} else if (!memcmp(IW_EVT_STR_STA_DISASSOC, extra, strlen(IW_EVT_STR_STA_DISASSOC))) {
+				wifi_indication(WIFI_EVENT_STA_DISASSOC, wrqu->addr.sa_data, sizeof(null_mac), 0);
+			} else if (!memcmp(IW_EVT_STR_SEND_ACTION_DONE, extra, strlen(IW_EVT_STR_SEND_ACTION_DONE))) {
+				wifi_indication(WIFI_EVENT_SEND_ACTION_DONE, NULL, 0, wrqu->data.flags);
+			}
+#endif
 		}
 		break;
 	case SIOCGIWSCAN:

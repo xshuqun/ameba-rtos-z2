@@ -14,7 +14,7 @@
 #define PING_IP		"192.168.159.1"
 #define PING_TO		1000
 #define PING_ID		0xABCD
-#define PING_ID_6   0x0100
+#define PING_ID_6	0x0100
 #define BUF_SIZE	10000
 #define STACKSIZE	1024
 
@@ -27,6 +27,7 @@ xTaskHandle g_ping_task = NULL;
 unsigned char *ping_buf = NULL;
 unsigned char  *reply_buf = NULL;
 int ping_socket;
+extern struct netif xnetif[];
 
 
 static void generate_ping_echo(unsigned char *buf, int size)
@@ -48,17 +49,18 @@ static void generate_ping_echo(unsigned char *buf, int size)
 	//Checksum includes icmp header and data. Need to calculate after fill up icmp header
 	pecho->chksum = inet_chksum(pecho, sizeof(struct icmp_echo_hdr) + size);
 }
+
 #if LWIP_IPV6
 static void generate_ping_echo_6(unsigned char *buf, int size)
 {
 	int i;
-	struct icmp_echo_hdr *pecho;
+	struct icmp6_echo_hdr *pecho;
 
 	for (i = 0; i < size; i ++) {
-		buf[sizeof(struct icmp_echo_hdr) + i] = (unsigned char) i;
+		buf[sizeof(struct icmp6_echo_hdr) + i] = (unsigned char) i;
 	}
 
-	pecho = (struct icmp_echo_hdr *) buf;
+	pecho = (struct icmp6_echo_hdr *) buf;
 	ICMPH_TYPE_SET(pecho, ICMP6_TYPE_EREQ);
 	ICMPH_CODE_SET(pecho, 0);
 	pecho->chksum = 0;
@@ -66,21 +68,18 @@ static void generate_ping_echo_6(unsigned char *buf, int size)
 	pecho->seqno = htons(++ ping_seq);
 
 	//Checksum includes icmp header and data. Need to calculate after fill up icmp header
-	//pecho->chksum = inet_chksum(pecho, sizeof(struct icmp_echo_hdr) + size);
+	//pecho->chksum = inet_chksum(pecho, sizeof(struct icmp6_echo_hdr) + size);
 }
 #endif
-extern struct netif xnetif[];
+
 void ping_test(void *param)
 {
 	int i;
-	//int ping_socket;
 	int pint_timeout = PING_TO;
 	struct sockaddr_in to_addr, from_addr, src_addr;
 	int from_addr_len = sizeof(struct sockaddr);
-	int ping_size, reply_size, ret_size;
-	//unsigned char *ping_buf, *reply_buf;
+	int ping_size, frame_size, reply_size, ret_size;
 	unsigned int ping_time, reply_time;
-	//struct ip_hdr *iphdr;
 	struct icmp_echo_hdr *pecho;
 	unsigned int min_time = 1000, max_time = 0;
 	struct hostent *server_host;
@@ -91,10 +90,10 @@ void ping_test(void *param)
 	int from_addr6_len = sizeof(struct sockaddr_in6);
 	struct sockaddr_in6 to_addr6, from_addr6, src_addr6;
 	int ping_addr_is_ipv6;
-	int ipv6_addr_equal = 0;
 	ip6_addr_t *dest_addr6 = NULL;
-	unsigned int recv_time;
+	struct icmp6_echo_hdr *pecho6;
 #endif
+
 	vTaskDelay(100);//wait log service thread done
 	ping_total_time = 0;
 	ping_received_count = 0;
@@ -104,26 +103,25 @@ void ping_test(void *param)
 		goto Exit;
 	}
 
-	//Ping size = icmp header(8 bytes) + data size
-	ping_size = sizeof(struct icmp_echo_hdr) + data_size;
+#if LWIP_IPV6
+	if (inet_pton(AF_INET6, host, &to_addr6.sin6_addr)) {
+		ping_addr_is_ipv6 = 1;
+		ping_size = sizeof(struct icmp6_echo_hdr) + data_size;
+		frame_size = reply_size = ping_size + IP6_HLEN;
+	} else {
+		ping_addr_is_ipv6 = 0;
+#endif
+		ping_size = sizeof(struct icmp_echo_hdr) + data_size;
+		frame_size = reply_size = ping_size + IP_HLEN;
+#if LWIP_IPV6
+	}
+#endif
 
 	ping_buf = pvPortMalloc(ping_size);
 	if (NULL == ping_buf) {
 		printf("\n\r[ERROR] %s: Allocate ping_buf failed\n", __func__);
 		goto Exit;
 	}
-
-#if LWIP_IPV6
-	if (inet_pton(AF_INET6, host, &to_addr6.sin6_addr)) {
-		ping_addr_is_ipv6 = 1;
-		reply_size = ping_size + IP6_HLEN;
-	} else {
-		ping_addr_is_ipv6 = 0;
-#endif
-		reply_size = ping_size + IP_HLEN;
-#if LWIP_IPV6
-	}
-#endif
 
 	reply_buf = pvPortMalloc(reply_size);
 	if (NULL == reply_buf) {
@@ -132,7 +130,7 @@ void ping_test(void *param)
 		goto Exit;
 	}
 
-	printf("\n\r[%s] PING %s %d(%d) bytes of data\n", __FUNCTION__, host, data_size, sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr) + data_size);
+	printf("\n\r[%s] PING %s %d(%d) bytes of data\n", __FUNCTION__, host, data_size, frame_size);
 
 	for (i = 0; ((i < ping_count) || (infinite_loop == 1)) && (!g_ping_terminate); i ++) {
 #if LWIP_IPV6
@@ -144,6 +142,8 @@ void ping_test(void *param)
 		if (ping_socket < 0) {
 			printf("create socket failed\r\n");
 		}
+
+		pint_timeout = PING_TO;
 #if defined(LWIP_SO_SNDRCVTIMEO_NONSTANDARD) && (LWIP_SO_SNDRCVTIMEO_NONSTANDARD == 0)	// lwip 1.5.0
 		struct timeval timeout;
 		timeout.tv_sec = pint_timeout / 1000;
@@ -249,56 +249,21 @@ void ping_test(void *param)
 		}
 
 		ping_time = xTaskGetTickCount();
-#if LWIP_IPV6
-		if (ping_addr_is_ipv6) {
-			pecho = (struct icmp_echo_hdr *)(reply_buf + IP6_HLEN);
-		} else
-#endif
-			pecho = (struct icmp_echo_hdr *)(reply_buf + IP_HLEN);
 
+		//keep receiving until get Echo reply frame from ping destination
+		while (1) {
 #if LWIP_IPV6
-		if (ping_addr_is_ipv6) {
-			ret_size = recvfrom(ping_socket, reply_buf, reply_size, 0, (struct sockaddr *) &from_addr6, (socklen_t *) &from_addr6_len);
-			if (!memcmp((void *)&from_addr6.sin6_addr, (void *)&to_addr6.sin6_addr, sizeof(from_addr6.sin6_addr))) {
-				ipv6_addr_equal = TRUE;
-			}
-			recv_time = xTaskGetTickCount();
-			//keep receiving until get Echo reply frame from ping destination
-			while ((pecho->type != ICMP6_TYPE_EREP) || (ipv6_addr_equal != TRUE)) {
+			if (ping_addr_is_ipv6) {
 				ret_size = recvfrom(ping_socket, reply_buf, reply_size, 0, (struct sockaddr *) &from_addr6, (socklen_t *) &from_addr6_len);
-				if (!memcmp((void *)&from_addr6.sin6_addr, (void *)&to_addr6.sin6_addr, sizeof(from_addr6.sin6_addr))) {
-					ipv6_addr_equal = TRUE;
-				}
-				if ((xTaskGetTickCount() - recv_time) > 5000) {
-					break;
-				}
-			}
-		} else
-#endif
-			ret_size = recvfrom(ping_socket, reply_buf, reply_size, 0, (struct sockaddr *) &from_addr, (socklen_t *) &from_addr_len);
+				reply_time = xTaskGetTickCount();
 
-		if (ret_size >= (int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr))) {
-			reply_time = xTaskGetTickCount();
-#if LWIP_IPV6
-			if (ping_addr_is_ipv6 && ipv6_addr_equal) {
-				if ((pecho->id == PING_ID_6) && (pecho->seqno == htons(ping_seq))) {
-					printf("\n\r[%s] %d bytes from %s: icmp_seq=%d time=%d ms", __FUNCTION__, data_size, inet6_ntoa(from_addr6.sin6_addr), htons(pecho->seqno),
-						   (reply_time - ping_time) * portTICK_RATE_MS);
-					ping_received_count++;
-					ping_total_time += (reply_time - ping_time) * portTICK_RATE_MS;
-					if ((reply_time - ping_time) > max_time) {
-						max_time = (reply_time - ping_time);
-					}
-					if ((reply_time - ping_time) < min_time) {
-						min_time = (reply_time - ping_time);
-					}
-				}
-			} else
-#endif
-				if (from_addr.sin_addr.s_addr == to_addr.sin_addr.s_addr) {
-					if ((pecho->id == PING_ID) && (pecho->seqno == htons(ping_seq))) {
-						printf("\n\r[%s] %d bytes from %s: icmp_seq=%d time=%d ms", __FUNCTION__, data_size, inet_ntoa(from_addr.sin_addr), htons(pecho->seqno),
-							   (reply_time - ping_time) * portTICK_RATE_MS);
+				if ((ret_size >= (int)(sizeof(struct ip6_hdr) + sizeof(struct icmp6_echo_hdr)))
+					&& !memcmp((void *)&from_addr6.sin6_addr, (void *)&to_addr6.sin6_addr, sizeof(from_addr6.sin6_addr))) {
+					pecho6 = (struct icmp6_echo_hdr *)(reply_buf + IP6_HLEN);
+
+					if ((pecho6->type == ICMP6_TYPE_EREP) && (pecho6->id == PING_ID_6) && (pecho6->seqno == htons(ping_seq))) {
+						printf("\n\r[%s] %d bytes from %s: icmp_seq=%d time=%d ms", __FUNCTION__, data_size, inet6_ntoa(from_addr6.sin6_addr),
+							   htons(pecho6->seqno), (reply_time - ping_time) * portTICK_RATE_MS);
 						ping_received_count++;
 						ping_total_time += (reply_time - ping_time) * portTICK_RATE_MS;
 						if ((reply_time - ping_time) > max_time) {
@@ -307,12 +272,48 @@ void ping_test(void *param)
 						if ((reply_time - ping_time) < min_time) {
 							min_time = (reply_time - ping_time);
 						}
+						break;
 					}
-				} else {
-					printf("\n\r[%s] Request timeout for icmp_seq %d\n", __FUNCTION__, ping_seq);
 				}
-		} else {
-			printf("\n\r[%s] Request timeout for icmp_seq %d\n", __FUNCTION__, ping_seq);
+			} else
+#endif
+			{
+				ret_size = recvfrom(ping_socket, reply_buf, reply_size, 0, (struct sockaddr *) &from_addr, (socklen_t *) &from_addr_len);
+				reply_time = xTaskGetTickCount();
+
+				if ((ret_size >= (int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr)))
+					&& (from_addr.sin_addr.s_addr == to_addr.sin_addr.s_addr)) {
+					pecho = (struct icmp_echo_hdr *)(reply_buf + IP_HLEN);
+
+					if ((pecho->type == ICMP_ER) && (pecho->id == PING_ID) && (pecho->seqno == htons(ping_seq))) {
+						printf("\n\r[%s] %d bytes from %s: icmp_seq=%d time=%d ms", __FUNCTION__, data_size, inet_ntoa(from_addr.sin_addr),
+							   htons(pecho->seqno), (reply_time - ping_time) * portTICK_RATE_MS);
+						ping_received_count++;
+						ping_total_time += (reply_time - ping_time) * portTICK_RATE_MS;
+						if ((reply_time - ping_time) > max_time) {
+							max_time = (reply_time - ping_time);
+						}
+						if ((reply_time - ping_time) < min_time) {
+							min_time = (reply_time - ping_time);
+						}
+						break;
+					}
+				}
+			}
+
+			pint_timeout -= (int)((reply_time - ping_time) * portTICK_RATE_MS);
+			if (pint_timeout > 0) {
+#if defined(LWIP_SO_SNDRCVTIMEO_NONSTANDARD) && (LWIP_SO_SNDRCVTIMEO_NONSTANDARD == 0)
+				timeout.tv_sec = pint_timeout / 1000;
+				timeout.tv_usec = pint_timeout % 1000 * 1000;
+				setsockopt(ping_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+#else
+				setsockopt(ping_socket, SOL_SOCKET, SO_RCVTIMEO, &pint_timeout, sizeof(pint_timeout));
+#endif
+			} else {
+				printf("\n\r[%s] Request timeout for icmp_seq %d\n", __FUNCTION__, ping_seq);
+				break;
+			}
 		}
 
 		close(ping_socket);

@@ -44,14 +44,6 @@
 #include "ftl_app.h"
 #endif
 
-/*============================================================================*
- *                              Constants
- *============================================================================*/
-#if (F_BT_LE_USE_RANDOM_ADDR==1)
-/** @brief  Define start offset of the flash to save static random address. */
-#define BLE_PERIPHERAL_APP_STATIC_RANDOM_ADDR_OFFSET 0
-#endif
-
 /** @defgroup  PERIPH_APP Peripheral Application
 	* @brief This file handles BLE peripheral application routines.
 	* @{
@@ -257,6 +249,13 @@ void app_handle_dev_state_evt(T_GAP_DEV_STATE new_state, uint16_t cause)
 			printf("[%s]le_gen_rand_addr result = %x\r\n",__func__,result);
 			result = le_set_rand_addr(bt_addr);
 			printf("[%s]le_set_rand_addr result = %x\r\n",__func__,result);
+			printf("random bd addr: 0x%02x:%02x:%02x:%02x:%02x:%02x\r\n",
+							bt_addr[5],
+							bt_addr[4],
+							bt_addr[3],
+							bt_addr[2],
+							bt_addr[1],
+							bt_addr[0]);
 			memset(bt_addr,0,sizeof(uint8_t)*6);
 #endif
 			/*stack ready*/
@@ -894,42 +893,6 @@ void app_vendor_callback(uint8_t cb_type, void *p_cb_data)
 /** @addtogroup  PERIPHERAL_APP
 	* @{
 	*/
-/** @defgroup  PERIPHERAL_RANDOM Static Random Address Storage
-	* @brief Use @ref F_BT_LE_USE_RANDOM_ADDR to open
-	* @{
-	*/
-#if (F_BT_LE_USE_RANDOM_ADDR==1)
-/**
- * @brief   Save static random address information into flash.
- * @param[in] p_addr Pointer to the buffer for saving data.
- * @retval 0 Save success.
- * @retval other Failed.
- */
-uint32_t ble_peripheral_app_save_static_random_address(T_APP_STATIC_RANDOM_ADDR *p_addr)
-{
-	APP_PRINT_INFO0("ble_peripheral_app_save_static_random_address");
-	return ftl_save(p_addr, BLE_PERIPHERAL_APP_STATIC_RANDOM_ADDR_OFFSET, sizeof(T_APP_STATIC_RANDOM_ADDR));
-}
-/**
-  * @brief  Load static random address information from storage.
-  * @param[out]  p_addr Pointer to the buffer for loading data.
-  * @retval 0 Load success.
-  * @retval other Failed.
-  */
-uint32_t ble_peripheral_app_load_static_random_address(T_APP_STATIC_RANDOM_ADDR *p_addr)
-{
-	uint32_t result;
-	result = ftl_load(p_addr, BLE_PERIPHERAL_APP_STATIC_RANDOM_ADDR_OFFSET,
-					  sizeof(T_APP_STATIC_RANDOM_ADDR));
-	APP_PRINT_INFO1("ble_peripheral_app_load_static_random_address: result 0x%x", result);
-	if (result)
-	{
-		memset(p_addr, 0, sizeof(T_APP_STATIC_RANDOM_ADDR));
-	}
-	return result;
-}
-#endif
-
 #if (LEGACY_ADV_CONCURRENT == 1)
 void legacy_adv_concurrent_send_msg(void)
 {
@@ -1157,7 +1120,5 @@ void legacy_adv_concurrent_deinit(void)
 }
 #endif
 
-/** @} */
-/** @} */
 /** @} */ /* End of group PERIPH_APP */
 #endif

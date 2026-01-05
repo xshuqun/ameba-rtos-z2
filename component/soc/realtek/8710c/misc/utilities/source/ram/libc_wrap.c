@@ -173,18 +173,18 @@ exit:
 #include "stdio_port.h"
 #include "rt_printf.h"
 
-#ifdef PLATFORM_MSMART
-int ms_doprint = 0;
+#if defined(CONFIG_OFF_LOG) && (CONFIG_OFF_LOG == 1)
+static int printf_enabled = 0;
 #else
-int ms_doprint = 1;
+static int printf_enabled = 1;
 #endif
+
 int __wrap_printf(const char *fmt, ...)
 {
-#ifdef PLATFORM_MSMART
-	if (ms_doprint == 0) {
+	if (printf_enabled == 0) {
 		return 0;
 	}
-#endif
+
 	int count = 0;
 	const char *fmt1;
 
@@ -212,11 +212,6 @@ int __wrap_puts(const char *str)
 
 int __wrap_putc(char character, void *file)
 {
-#ifdef PLATFORM_MSMART
-	if (ms_doprint == 0) {
-		return 0;
-	}
-#endif
 	/* must handle file argument */
 	stdio_printf_stubs.stdio_port_putc(character);
 	return 0;
@@ -224,11 +219,6 @@ int __wrap_putc(char character, void *file)
 
 int __wrap_putchar(char character)
 {
-#ifdef PLATFORM_MSMART
-	if (ms_doprint == 0) {
-		return 0;
-	}
-#endif
 	stdio_printf_stubs.stdio_port_putc(character);
 	return 0;
 }
@@ -253,11 +243,6 @@ int _write(int fd, char *buf, int count)
 
 int __wrap_vprintf(const char *fmt, va_list args)
 {
-#ifdef PLATFORM_MSMART
-	if (ms_doprint == 0) {
-		return 0;
-	}
-#endif
 	int count = 0;
 	const char *fmt1;
 

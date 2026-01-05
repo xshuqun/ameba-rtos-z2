@@ -25,6 +25,12 @@ Setup Guide
 		In platform_opts.h, please set #define CONFIG_EXAMPLE_HTTPD  1
 		In lwipopts.h, please set #define SO_REUSE  1
 
+		For MbedTLS version above 3.1.0:
+		To run HTTPS, please comment the below macros in mbedtls_config.h
+			//#define MBEDTLS_SSL_PROTO_TLS1_3
+			//#define MBEDTLS_LMS_C
+			//#define MBEDTLS_PSA_CRYPTO_C
+
 Parameter Setting and Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 About SSL configuration:

@@ -11,9 +11,12 @@ For PolarSSL:
 [..\polarssl\config_rsa.h]
 	#define POLARSSL_CERTS_C
 	#define POLARSSL_SSL_SRV_C
-For MbedTLS:
-[..\bedtls\config_rsa.h]
+For MbedTLS version below 3.4.0:
+[..\mbedtls\config_rsa.h]
 	#define MBEDTLS_CERTS_C
+	#define MBEDTLS_SSL_SRV_C
+For MbedTLS version above 3.4.0:
+[..\mbedtls\mbedtls_config.h]
 	#define MBEDTLS_SSL_SRV_C
 For Matter MbedTLS:
 [component\common\application\matter\common\mbedtls\mbedtls_config.h]

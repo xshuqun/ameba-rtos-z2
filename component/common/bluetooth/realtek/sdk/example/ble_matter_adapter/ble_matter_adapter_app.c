@@ -29,18 +29,18 @@
 #include <gap_bond_le.h>
 #include <gap_conn_le.h>
 #include <gcs_client.h>
-#include "gatt_builtin_services.h"
-#include "os_mem.h"
-#include "os_msg.h"
-#include "os_sync.h"
-#include "os_queue.h"
+#include <gatt_builtin_services.h>
+#include <os_mem.h>
+#include <os_msg.h>
+#include <os_sync.h>
+#include <os_queue.h>
 #include <ble_matter_adapter_app_flags.h>
 #include <ble_matter_adapter_app.h>
 #include <ble_matter_adapter_app_task.h>
-#include "ble_matter_adapter_app_main.h"
-#include "vendor_cmd_bt.h"
-#include "matter_blemgr_common.h"
-#include "os_timer.h"
+#include <ble_matter_adapter_app_main.h>
+#include <vendor_cmd_bt.h>
+#include <matter_blemgr_common.h>
+#include <os_timer.h>
 /*============================================================================*
  *                              Constants
  *============================================================================*/
@@ -53,11 +53,11 @@ int bt_matter_device_matter_scan_state = 0;
 int ble_matter_adapter_peripheral_app_max_links = 0;
 int ble_matter_adapter_central_app_max_links = 0;
 
-T_GAP_DEV_STATE ble_matter_adapter_gap_dev_state = {0, 0, 0, 0, 0};                /**< GAP device state */
+T_GAP_DEV_STATE ble_matter_adapter_gap_dev_state = {0, 0, 0, 0, 0};		/**< GAP device state */
 T_APP_LINK ble_matter_adapter_app_link_table[BLE_MATTER_ADAPTER_APP_MAX_LINKS];
 
-T_CLIENT_ID ble_matter_adapter_gcs_client_id;         /**< General Common Services client client id*/
-T_SERVER_ID ble_matter_adapter_service_id;	/**< Matter service id */
+T_CLIENT_ID ble_matter_adapter_gcs_client_id;		/**< General Common Services client client id*/
+T_SERVER_ID ble_matter_adapter_service_id;		/**< Matter service id */
 
 M_MULTI_ADV_PARAM matter_multi_adv_param_array[MAX_ADV_NUMBER] = {0};
 T_MULTI_ADV_CONCURRENT matter_multi_adapter = {0};
@@ -65,7 +65,7 @@ T_MULTI_ADV_CONCURRENT matter_multi_adapter = {0};
 uint8_t matter_local_public_addr[6] = {0};
 uint8_t matter_local_static_random_addr[6] = {0};
 
-uint8_t link_customer = 0;    //1  means connection is matter   2 means connection is customer
+uint8_t link_customer = 0;		//1: connection is matter; 2: connection is customer
 #if CONFIG_BLE_MATTER_MULTI_ADV_ON
 uint8_t customer_adv_id = 2;
 #endif
@@ -136,7 +136,6 @@ bool matter_multi_adv_start_by_id(uint8_t *adv_id, uint8_t *adv_data, uint16_t a
 	if ((MAX_ADV_NUMBER != *adv_id) && (matter_multi_adv_param_array[*adv_id].is_used == 1)) {
 		os_timer_stop(&matter_multi_adv_param_array[*adv_id].one_shot_timer);
 	} else {
-
 		*adv_id = matter_get_unused_adv_index(type);
 		if (MAX_ADV_NUMBER == *adv_id) {
 			printf("[%s] Extend the max adv num %d\r\n", __func__, MAX_ADV_NUMBER);
@@ -161,7 +160,7 @@ bool matter_multi_adv_start_by_id(uint8_t *adv_id, uint8_t *adv_data, uint16_t a
 		h_adv_param->H_adv_intval = matter_adv_interval;
 		h_adv_param->is_used = 1;
 		h_adv_param->type = 1;
-		h_adv_param->adv_id = 1;
+		h_adv_param->adv_id = adv_index;
 		matter_multi_adapter.matter_sta_sto_flag = false;
 		os_mutex_give(h_adv_param->update_adv_mutex);
 #if CONFIG_BLE_MATTER_MULTI_ADV_ON
@@ -175,7 +174,7 @@ bool matter_multi_adv_start_by_id(uint8_t *adv_id, uint8_t *adv_data, uint16_t a
 		h_adv_param->H_adv_intval = 320;
 		h_adv_param->is_used = 1;
 		h_adv_param->type = 2;
-		h_adv_param->adv_id = 2;
+		h_adv_param->adv_id = adv_index;
 		matter_multi_adapter.customer_sta_sto_flag = false;
 		os_mutex_give(h_adv_param->update_adv_mutex);
 #endif
@@ -556,7 +555,6 @@ void ble_matter_adapter_app_handle_dev_state_evt(T_GAP_DEV_STATE new_state, uint
 		if (new_state.gap_scan_state == GAP_SCAN_STATE_IDLE) {
 			APP_PRINT_INFO0("GAP scan stop");
 			printf("GAP scan stop\r\n");
-
 		} else if (new_state.gap_scan_state == GAP_SCAN_STATE_SCANNING) {
 			APP_PRINT_INFO0("GAP scan start");
 			printf("GAP scan start\r\n");
@@ -572,7 +570,6 @@ void ble_matter_adapter_app_handle_dev_state_evt(T_GAP_DEV_STATE new_state, uint
 				APP_PRINT_INFO0("GAP adv stoped");
 				printf("GAP adv stopped\r\n");
 			}
-
 		} else if (new_state.gap_adv_state == GAP_ADV_STATE_ADVERTISING) {
 			APP_PRINT_INFO0("GAP adv start");
 			printf("GAP adv start\r\n");
@@ -623,10 +620,6 @@ void ble_matter_adapter_app_handle_conn_state_evt(uint8_t conn_id, T_GAP_CONN_ST
 
 		if (link_customer == 1) { //matter
 			matter_multi_adv_param_array[0].connect_flag = false;
-
-			/* Matter ADV will be restarted from Matter upper layer */
-			//matter_multi_adv_start_by_id(&matter_adv_id, matter_adv_data, matter_adv_data_length, NULL, 0, 1); // the last parameter: 1 for Matter; 2 for Customer
-
 #if 1  //send data to matter
 			T_MATTER_BLEMGR_GAP_DISCONNECT_CB_ARG *disconnected_msg_matter = (T_MATTER_BLEMGR_GAP_DISCONNECT_CB_ARG *)os_mem_alloc(0,
 					sizeof(T_MATTER_BLEMGR_GAP_DISCONNECT_CB_ARG));
@@ -647,8 +640,6 @@ void ble_matter_adapter_app_handle_conn_state_evt(uint8_t conn_id, T_GAP_CONN_ST
 										 2); // the last parameter: 1 for Matter; 2 for Customer
 #endif
 		}
-
-
 	}
 	break;
 
@@ -894,18 +885,16 @@ void ble_matter_adapter_app_handle_gap_msg(T_IO_MSG *p_gap_msg)
 		printf("GAP_MSG_LE_BOND_USER_CONFIRMATION: conn_id %d, passkey %d\r\n",
 			   conn_id,
 			   display_value);
-		//le_bond_user_confirm(conn_id, GAP_CFM_CAUSE_ACCEPT);
 	}
 	break;
 
 	case GAP_MSG_LE_BOND_PASSKEY_INPUT: {
-		//uint32_t passkey = 888888;
 		conn_id = gap_msg.msg_data.gap_bond_passkey_input.conn_id;
 		APP_PRINT_INFO1("GAP_MSG_LE_BOND_PASSKEY_INPUT: conn_id %d", conn_id);
 		printf("GAP_MSG_LE_BOND_PASSKEY_INPUT: conn_id %d\r\n", conn_id);
-		//le_bond_passkey_input_confirm(conn_id, passkey, GAP_CFM_CAUSE_ACCEPT);
 	}
 	break;
+
 #if F_BT_LE_SMP_OOB_SUPPORT
 	case GAP_MSG_LE_BOND_OOB_INPUT: {
 		uint8_t oob_data[GAP_OOB_LEN] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -916,6 +905,7 @@ void ble_matter_adapter_app_handle_gap_msg(T_IO_MSG *p_gap_msg)
 	}
 	break;
 #endif
+
 	default:
 		APP_PRINT_ERROR1("ble_matter_adapter_app_handle_gap_msg: unknown subtype %d", p_gap_msg->subtype);
 		break;
@@ -982,7 +972,7 @@ void bt_matter_device_matter_app_parse_scan_info(T_LE_SCAN_INFO *scan_info)
 			case GAP_ADTYPE_32BIT_MORE:
 			case GAP_ADTYPE_32BIT_COMPLETE: {
 				uint32_t *p_uuid = (uint32_t *)(buffer);
-				uint8_t    i     = length - 1;
+				uint8_t i = length - 1;
 
 				while (i >= 4) {
 					APP_PRINT_INFO1("GAP_ADTYPE_32BIT_XXX: 0x%x", *p_uuid);
@@ -1065,8 +1055,6 @@ void bt_matter_device_matter_app_parse_scan_info(T_LE_SCAN_INFO *scan_info)
 
 				for (i = 0; i < (length - 1); i++) {
 					APP_PRINT_INFO1("  AD Data: Unhandled Data = 0x%x", scan_info->data[pos + i]);
-					//BLE_PRINT("  AD Data: Unhandled Data = 0x%x\n\r", scan_info->data[pos + i]);
-
 				}
 			}
 			break;
@@ -1086,7 +1074,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 {
 	uint16_t i;
 	T_GCS_DISCOV_RESULT *p_result_table;
-	uint16_t    properties;
+	uint16_t properties;
 	switch (discov_result.discov_type) {
 	case GCS_ALL_PRIMARY_SRV_DISCOV:
 		APP_PRINT_INFO2("conn_id %d, GCS_ALL_PRIMARY_SRV_DISCOV, is_success %d",
@@ -1140,7 +1128,6 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 				printf("SRV DATA[%d]: service range: 0x%x-0x%x\n\r",
 					   i, p_result_table->result_data.srv_disc_data.att_handle,
 					   p_result_table->result_data.srv_disc_data.end_group_handle);
-
 				break;
 
 			default:
@@ -1167,7 +1154,6 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 				printf("SRV DATA[%d]: service range: 0x%x-0x%x\n\r",
 					   i, p_result_table->result_data.srv_disc_data.att_handle,
 					   p_result_table->result_data.srv_disc_data.end_group_handle);
-
 				break;
 
 			default:
@@ -1226,8 +1212,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 								properties & GATT_CHAR_PROP_READ,
 								properties & GATT_CHAR_PROP_WRITE_NO_RSP,
 								properties & GATT_CHAR_PROP_WRITE,
-								properties & GATT_CHAR_PROP_NOTIFY
-							   );
+								properties & GATT_CHAR_PROP_NOTIFY);
 				printf("CHAR UUID128[%d]:  decl hndl=0x%x, prop=0x%x, value hndl=0x%x, uuid128="UUID_128_FORMAT"\n\r",
 					   i, p_result_table->result_data.char_uuid128_disc_data.decl_handle,
 					   p_result_table->result_data.char_uuid128_disc_data.properties,
@@ -1238,8 +1223,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 					   properties & GATT_CHAR_PROP_READ,
 					   properties & GATT_CHAR_PROP_WRITE_NO_RSP,
 					   properties & GATT_CHAR_PROP_WRITE,
-					   properties & GATT_CHAR_PROP_NOTIFY
-					  );
+					   properties & GATT_CHAR_PROP_NOTIFY);
 				break;
 			default:
 				APP_PRINT_ERROR0("Invalid Discovery Result Type!");
@@ -1270,8 +1254,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 								properties & GATT_CHAR_PROP_READ,
 								properties & GATT_CHAR_PROP_WRITE_NO_RSP,
 								properties & GATT_CHAR_PROP_WRITE,
-								properties & GATT_CHAR_PROP_NOTIFY
-							   );
+								properties & GATT_CHAR_PROP_NOTIFY);
 				printf("UUID16 CHAR[%d]: Characteristics by uuid16, decl hndl=0x%x, prop=0x%x, value hndl=0x%x, uuid16=<0x%x>\n\r",
 					   i, p_result_table->result_data.char_uuid16_disc_data.decl_handle,
 					   p_result_table->result_data.char_uuid16_disc_data.properties,
@@ -1282,8 +1265,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 					   properties & GATT_CHAR_PROP_READ,
 					   properties & GATT_CHAR_PROP_WRITE_NO_RSP,
 					   properties & GATT_CHAR_PROP_WRITE,
-					   properties & GATT_CHAR_PROP_NOTIFY
-					  );
+					   properties & GATT_CHAR_PROP_NOTIFY);
 
 				break;
 
@@ -1316,8 +1298,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 								properties & GATT_CHAR_PROP_READ,
 								properties & GATT_CHAR_PROP_WRITE_NO_RSP,
 								properties & GATT_CHAR_PROP_WRITE,
-								properties & GATT_CHAR_PROP_NOTIFY
-							   );
+								properties & GATT_CHAR_PROP_NOTIFY);
 				printf("UUID128 CHAR[%d]: Characteristics by uuid128, decl hndl=0x%x, prop=0x%x, value hndl=0x%x, uuid128="UUID_128_FORMAT"\n\r",
 					   i, p_result_table->result_data.char_uuid128_disc_data.decl_handle,
 					   p_result_table->result_data.char_uuid128_disc_data.properties,
@@ -1328,9 +1309,7 @@ void ble_matter_adapter_gcs_handle_discovery_result(uint8_t conn_id, T_GCS_DISCO
 					   properties & GATT_CHAR_PROP_READ,
 					   properties & GATT_CHAR_PROP_WRITE_NO_RSP,
 					   properties & GATT_CHAR_PROP_WRITE,
-					   properties & GATT_CHAR_PROP_NOTIFY
-					  );
-
+					   properties & GATT_CHAR_PROP_NOTIFY);
 				break;
 
 			default:
@@ -1569,7 +1548,6 @@ T_APP_RESULT ble_matter_adapter_app_gap_callback(uint8_t cb_type, void *p_cb_dat
 			   p_data->p_le_phy_update_info->cause,
 			   p_data->p_le_phy_update_info->rx_phy,
 			   p_data->p_le_phy_update_info->tx_phy);
-
 		break;
 
 	case GAP_MSG_LE_REMOTE_FEATS_INFO: {
@@ -1719,8 +1697,7 @@ T_APP_RESULT ble_matter_adapter_app_profile_callback(T_SERVER_ID service_id, voi
 			if (p_param->event_data.send_data_result.cause == GAP_SUCCESS) {
 				APP_PRINT_INFO0("PROFILE_EVT_SEND_DATA_COMPLETE success");
 				printf("PROFILE_EVT_SEND_DATA_COMPLETE success\r\n");
-//send msg to matter
-
+				//send msg to matter
 				if (p_param->event_data.send_data_result.service_id == ble_matter_adapter_service_id) {
 					T_MATTER_BLEMGR_TX_COMPLETE_CB_ARG *indication_complete_msg_matter = (T_MATTER_BLEMGR_TX_COMPLETE_CB_ARG *) os_mem_alloc(0,
 							sizeof(T_MATTER_BLEMGR_TX_COMPLETE_CB_ARG));

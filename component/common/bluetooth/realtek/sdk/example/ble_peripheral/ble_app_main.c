@@ -40,6 +40,9 @@
 #include "rtk_coex.h"
 #include "vendor_cmd_bt.h"
 
+#if (F_BT_LE_USE_RANDOM_ADDR==1)
+#include <bt_example_entry.h>
+#endif
 
 /** @defgroup  PERIPH_DEMO_MAIN Peripheral Main
     * @brief Main file to initialize hardware and BT stack and start task scheduling
@@ -183,12 +186,12 @@ void app_le_gap_init(void)
 
     /* register gap message callback */
     le_register_app_cb(app_gap_callback);
-    
+
 #if (F_BT_LE_USE_RANDOM_ADDR==1)
     T_APP_STATIC_RANDOM_ADDR random_addr;
     bool gen_addr = true;
     uint8_t local_bd_type = GAP_LOCAL_ADDR_LE_RANDOM;
-    if (ble_peripheral_app_load_static_random_address(&random_addr) == 0)
+    if (ble_app_load_static_random_address(&random_addr) == 1)
     {
         if (random_addr.is_exist == true)
         {
@@ -200,7 +203,7 @@ void app_le_gap_init(void)
         if (le_gen_rand_addr(GAP_RAND_ADDR_STATIC, random_addr.bd_addr) == GAP_CAUSE_SUCCESS)
         {
             random_addr.is_exist = true;
-            ble_peripheral_app_save_static_random_address(&random_addr);
+            ble_app_save_static_random_address(&random_addr);
         }
     }
     printf("random_addr.bd_addr = 0x%02x:0x%02x:0x%02x:0x%02x:0x%02x:0x%02x\r\n", \

@@ -35,10 +35,10 @@ int main(void)
 
 	dbg_printf("\r\n   GPIO Port Output DEMO   \r\n");
 
-	port_mode(&port0, PullNone);
 	// Assign pins to this port
 	pin_mask = PIN_MASK;    // each bit map to 1 pin: 0: pin disable, 1: pin enable
 	port_init(&port0, PortA, pin_mask, PIN_OUTPUT);
+	port_mode(&port0, PullNone);
 
 	while (1) {
 		for (i = 0; i < LED_PATTERN_NUM; i++) {
@@ -57,10 +57,10 @@ int main(void)
 
 	dbg_printf("\r\n   GPIO Port Input DEMO   \r\n");
 
-	port_mode(&port0, PullNone);
 	// Assign pins to this port
 	pin_mask = PIN_MASK;    // each bit map to 1 pin: 0: pin disable, 1: pin enable
 	port_init(&port0, PortA, pin_mask, PIN_INPUT);
+	port_mode(&port0, PullNone);
 
 	value_old = port_read(&port0);
 	while (1) {

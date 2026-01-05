@@ -478,6 +478,7 @@ void hal_flash_set_quad_enable (phal_spic_adaptor_t phal_spic_adaptor)
         case FLASH_TYPE_PUYA:
         case FLASH_TYPE_ZBIT:
         case FLASH_TYPE_GTEC:
+        case FLASH_TYPE_FM:
             status_value = hal_flash_get_status(phal_spic_adaptor, cmd->rdsr2);
             if ((status_value & 0x2) == 0) {
                 hal_flash_set_status(phal_spic_adaptor, cmd->wrsr2, 0x2 | status_value);
@@ -535,6 +536,7 @@ void hal_flash_unset_quad_enable (phal_spic_adaptor_t phal_spic_adaptor)
         case FLASH_TYPE_PUYA:
         case FLASH_TYPE_ZBIT:
         case FLASH_TYPE_GTEC:
+        case FLASH_TYPE_FM:
             status_value = hal_flash_get_status(phal_spic_adaptor, cmd->rdsr2);
             hal_flash_set_status(phal_spic_adaptor, cmd->wrsr2, ~0x2 & status_value);
             break;
@@ -1035,6 +1037,11 @@ void hal_flash_support_new_type (phal_spic_adaptor_t phal_spic_adaptor)
             phal_spic_adaptor->cmd = &new_flash_cmd;
             phal_spic_adaptor->flash_type = FLASH_TYPE_GTEC;
             break;
+
+        case 0xA1:
+            phal_spic_adaptor->cmd = &new_flash_cmd;
+            phal_spic_adaptor->flash_type = FLASH_TYPE_FM;
+            break;
             
         default:
             break;
@@ -1068,6 +1075,202 @@ u8 hal_flash_get_size (phal_spic_adaptor_t phal_spic_adaptor)
     }
 }
 
+/** \brief Description of hal_flash_wb_secure_reg_read
+ *
+ *    hal_flash_wb_secure_reg_read is used to read the value of Winbond flash's secure registers.
+      Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+ *
+ *   \param void *adaptor:      The pointer of the flash adaptor.
+ *   \param u32 length:      The read data length, maximum value is the size of status register, 256 bytes.
+ *   \param u32 addr:      The starting read address of the secure register, there are three secure registers 
+                           WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+                           Input address could be WB_SECURITY_REGn_ADDR + offset, for offset < 256.
+ *   \param u8 *data:      The destination address in memory to store secure register data returned by flash.
+ *
+ *   \return void.
+ */
+void hal_flash_wb_secure_reg_read(phal_spic_adaptor_t phal_spic_adaptor, u32 length, u32 addr, u8 *data)
+{
+    SPIC_Type *spic_dev  = phal_spic_adaptor->spic_dev;
+    pflash_dummy_cycle_t dummy_cycle;
+    u32 baudr;
+    u32 valid_cmd;
+    u32 rd_dummy_cycle_backup;
+    u32 rd_dummy_cycle;
+    u32 default_dummy_cycle;
+    u8 spic_bit_mode = phal_spic_adaptor->spic_bit_mode;
+    pflash_cmd_t cmd = phal_spic_adaptor->cmd;
+
+    /*Copy baudrate setting to fbaud register*/
+    spic_disable_rtl8710c(spic_dev);
+
+    baudr = spic_get_baudr_rtl8710c(spic_dev);
+
+    spic_set_fbaudr_rtl8710c(spic_dev, baudr);
+
+    /*Replace fast read command with secure register read command*/
+    spic_dev->read_fast_single = FLASH_CMD_WB_RDSCUR;
+
+    /*Backup current Auto read mode*/
+    valid_cmd = spic_dev->valid_cmd;
+
+    /*Reset to 1 IO auto read mode in valid_cmd*/
+    spic_dev->valid_cmd &= (~0x1F);
+
+    /*Backup Dummy cycle*/
+    rd_dummy_cycle_backup = spic_dev->auto_length_b.rd_dummy_length;
+
+    /*Derive correct dummy cycle for Read Secure Register Command*/
+    dummy_cycle = phal_spic_adaptor->dummy_cycle;
+
+    default_dummy_cycle = *(((u8 *)dummy_cycle) + spic_bit_mode);
+
+    rd_dummy_cycle = rd_dummy_cycle_backup - default_dummy_cycle*baudr*2 + FLASH_DUMMY_WB_RDSCUR*baudr*2;
+
+    spic_set_dummy_cycle_rtl8710c(spic_dev, rd_dummy_cycle);
+
+    /*Enble flash fast read*/
+    spic_dev->valid_cmd_b.frd_single = ENABLE;
+
+    hal_flash_stream_read(phal_spic_adaptor, length, addr, data);
+
+    /*Restore valid command*/
+    spic_dev->valid_cmd = valid_cmd;
+
+    /*Restore original fast read command*/
+    spic_dev->read_fast_single = cmd->fread;
+
+    /*Restore dummy cycle setting*/
+    spic_set_dummy_cycle_rtl8710c(spic_dev, rd_dummy_cycle_backup);
+}
+
+/** \brief Description of hal_flash_wb_secure_reg_erase
+ *
+ *    hal_flash_wb_secure_reg_erase is used to erase target secure registers of Winbond flash.
+ *    Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+ *
+ *   \param void *adaptor:      The pointer of the flash adaptor.
+ *   \param u32 addr:      The address of the secure register, there are three secure registers 
+                           WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+ *
+ *   \return void.
+ */
+void hal_flash_wb_secure_reg_erase(void *adaptor, u32 address)
+{
+    phal_spic_adaptor_t phal_spic_adaptor = (phal_spic_adaptor_t) adaptor;
+    u8 addr[3];
+    
+    addr[2] = address & 0xFF;
+    addr[1] = (address >> 8) & 0xFF;
+    addr[0] = (address >> 16) & 0xFF;
+
+    hal_flash_set_write_enable(phal_spic_adaptor);
+    spic_tx_cmd(phal_spic_adaptor, FLASH_CMD_WB_ESCUR, 3, addr);
+}
+
+/** \brief Description of hal_flash_wb_secure_reg_program
+ *
+ *    hal_flash_wb_secure_reg_program is used to program data into secure registers of Winbond flash.
+ *    Not all winbond flash supports secure registers, users should refer to datasheets for more details.
+ *
+ *   \param void *adaptor:      The pointer of the flash adaptor.
+ *   \param u32 length:      The program data length, each status register size is 256 bytes.
+ *   \param u32 addr:      The address of the secure register, there are three secure registers 
+                           WB_SECURITY_REG1_ADDR, WB_SECURITY_REG2_ADDR & WB_SECURITY_REG3_ADDR.
+                           Input address could be WB_SECURITY_REGn_ADDR + offset, for offset < 256.
+ *   \param u8 *data:      The address of data. Data stored in ram is about to be programmed to the flash secure registers.
+ *
+ *   \return void.
+ */
+void hal_flash_wb_secure_reg_program(void *adaptor, u32 length, u32 addr, u8 *data)
+{
+    phal_spic_adaptor_t phal_spic_adaptor = (phal_spic_adaptor_t) adaptor;
+    SPIC_Type *spic_dev  = phal_spic_adaptor->spic_dev;
+    spic_ctrlr0_t ctrlr0;
+
+    u32 tmp;
+    u8 addr_byte[3];
+    u8 index;
+    u8 addr_byte_num;
+
+    addr_byte_num = phal_spic_adaptor->addr_byte_num;
+
+    /*Load ctrlr0 value to configure*/
+    ctrlr0.w = spic_dev->ctrlr0;
+
+    /* Set writen enable bit */
+    hal_flash_set_write_enable(phal_spic_adaptor);
+
+    /* Disable spic in user mode */
+    spic_disable_rtl8710c(spic_dev);
+
+    spic_dev->valid_cmd_b.prm_en = DISABLE;
+
+    addr_byte[2] = (addr & 0xFF0000) >>16;
+    addr_byte[1] = (addr & 0xFF00)>>8;
+    addr_byte[0] = addr & 0xFF;
+
+    tmp = (FLASH_CMD_WB_PSCUR) | (addr_byte[2] << 8)|(addr_byte[1] << 16)|(addr_byte[0] << 24);
+    spic_dev->dr_word = tmp;
+    
+    /* Set tx mode*/
+    ctrlr0.b.tmod = TxMode;
+
+    /* Set length of address byte */
+    spic_dev->addr_length_b.addr_phase_length = addr_byte_num;
+
+    /*Program can be executed only with 1-1-1*/
+    ctrlr0.b.cmd_ch = SingleChnl;
+    ctrlr0.b.addr_ch = SingleChnl;
+    ctrlr0.b.data_ch = SingleChnl;
+
+    spic_dev->ctrlr0 = ctrlr0.w;
+
+    /*Set Ctrl2 to enable data split program*/
+    spic_dev->ctrlr2_b.seq_en = ENABLE;
+
+    //pre-load data before enabling
+    index = 0;
+
+    while (length > 4) {
+        spic_dev->dr_word = (u32)*((u32 *)data);
+        length -= 4;
+        data += 4;
+        index += 4;
+
+        if (index >= (SPIC_FIFO_DEPTH - 8)) {
+            break;
+        }
+    }
+
+    /* Enable spic in user mode */
+    spic_enable_rtl8710c(spic_dev);
+
+    while (length >= 4) {
+        spic_dev->dr_word = (u32)*((u32 *)data);
+        length -= 4;
+        data += 4;
+    }
+
+    while (length > 0) {
+        spic_dev->dr_byte = (u8) (*data);
+        length--;
+        data++;
+    }
+
+    /*Poll SPIC to get ready*/
+    spic_wait_ready(spic_dev);
+
+    /*Poll Flash to get ready*/
+    hal_flash_wait_ready(phal_spic_adaptor);
+
+    /*Disable spic in user mode*/
+    spic_disable_rtl8710c(spic_dev);
+
+    spic_dev->ctrlr2_b.seq_en = DISABLE;
+
+    spic_dev->valid_cmd_b.prm_en = ENABLE;
+}
 
 /** *@} */ /* End of group hs_hal_flash_ram_func */
 

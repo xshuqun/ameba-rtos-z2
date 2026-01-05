@@ -70,7 +70,9 @@ void *wss_tls_connect(int *sock, char *host, int port)
 		mbedtls_ssl_init(ssl);
 		mbedtls_ssl_config_init(conf);
 		mbedtls_ssl_set_bio(ssl, server_fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+		psa_crypto_init();
+#endif
 		if ((ret = mbedtls_ssl_config_defaults(conf,
 											   MBEDTLS_SSL_IS_CLIENT,
 											   MBEDTLS_SSL_TRANSPORT_STREAM,

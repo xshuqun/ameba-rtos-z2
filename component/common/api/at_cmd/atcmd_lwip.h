@@ -66,6 +66,7 @@
 typedef struct ns {
 	int con_id;
 	int sockfd;
+	int isready;
 	s8_t role;
 	int protocol;
 	u32_t addr;

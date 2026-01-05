@@ -30,7 +30,6 @@
 #include <gap_msg.h>
 #include <ble_scatternet_app.h>
 #include <gcs_client.h>
-#include <ble_scatternet_link_mgr.h>
 #include "trace_uart.h"
 #include <bte.h>
 #include "wifi_constants.h"
@@ -40,9 +39,13 @@
 #include <simple_ble_config.h>
 #include <gatt_builtin_services.h>
 #include <wifi/wifi_conf.h>
-#include "bas.h"
+#include <bas.h>
 #include "rtk_coex.h"
 #include <simple_ble_service.h>
+
+#if (F_BT_LE_USE_RANDOM_ADDR==1)
+#include <bt_example_entry.h>
+#endif
 
 /** @defgroup  CENTRAL_CLIENT_DEMO_MAIN Central Client Main
     * @brief Main file to initialize hardware and BT stack and start task scheduling
@@ -206,7 +209,7 @@ void ble_scatternet_app_le_gap_init(void)
 		T_APP_STATIC_RANDOM_ADDR random_addr;
 		bool gen_addr = true;
 		uint8_t local_bd_type = GAP_LOCAL_ADDR_LE_RANDOM;
-		if (ble_scatternet_app_load_static_random_address(&random_addr) == 0)
+		if (ble_app_load_static_random_address(&random_addr) == 1)
 		{
 			if (random_addr.is_exist == true)
 			{
@@ -218,7 +221,7 @@ void ble_scatternet_app_le_gap_init(void)
 			if (le_gen_rand_addr(GAP_RAND_ADDR_STATIC, random_addr.bd_addr) == GAP_CAUSE_SUCCESS)
 			{
 				random_addr.is_exist = true;
-				ble_scatternet_app_save_static_random_address(&random_addr);
+				ble_app_save_static_random_address(&random_addr);
 			}
 		}
 		le_cfg_local_identity_address(random_addr.bd_addr, GAP_IDENT_ADDR_RAND);

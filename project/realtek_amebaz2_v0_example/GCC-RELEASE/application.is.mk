@@ -111,8 +111,6 @@ INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/example/bt_config
 INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/example/ble_central
 INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/example/ble_peripheral
 INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/example/ble_scatternet
-INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/example/bt_ota_central_client
-
 INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/board/common/inc
 INCLUDES += -I../../../component/common/bluetooth/realtek/sdk/example/bt_airsync_config
 INCLUDES += -I../../../component/common/application/airsync/1.0.4
@@ -145,6 +143,7 @@ INCLUDES += -I../../../component/common/application/amazon/amazon-ffs/ffs_demo/r
 SRC_C =
 SRAM_C =
 ERAM_C =
+
 #bluetooth - board
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/board/amebaz2/src/hci/bt_fwconfig.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/board/amebaz2/src/hci/bt_mp_patch.c
@@ -173,8 +172,6 @@ SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/server/
 #SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/server/hids_rmc.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/client/simple_ble_client.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/server/simple_ble_service.c
-SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/client/ota_client.c
-SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/client/dfu_client.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/board/common/src/trace_task.c
 
 #bluetooth - example - ble_central
@@ -182,7 +179,6 @@ SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_central/ble
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_central/ble_central_app_task.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_central/ble_central_at_cmd.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_central/ble_central_client_app.c
-SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_central/ble_central_link_mgr.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/src/ble/profile/client/gcs_client.c
 
 #bluetooth - example - ble_peripheral
@@ -195,7 +191,6 @@ SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_peripheral/
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_scatternet/ble_scatternet_app.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_scatternet/ble_scatternet_app_main.c
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_scatternet/ble_scatternet_app_task.c
-SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/ble_scatternet/ble_scatternet_link_mgr.c
 
 #bluetooth - example - bt_beacon
 SRC_C += ../../../component/common/bluetooth/realtek/sdk/example/bt_beacon/bt_beacon_app.c
@@ -610,6 +605,7 @@ LFLAGS += -Wl,-wrap,rom_psk_CalcGTK
 LFLAGS += -Wl,-wrap,rom_psk_CalcPTK
 LFLAGS += -Wl,-wrap,aes_80211_encrypt
 LFLAGS += -Wl,-wrap,aes_80211_decrypt
+LFLAGS += -Wl,-wrap,AES_UnWRAP
 
 ifdef SYSTEM_TIME64_MAKE_OPTION
 LFLAGS += -Wl,-wrap,localtime -Wl,-wrap,mktime -Wl,-wrap,ctime

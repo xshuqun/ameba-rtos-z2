@@ -51,12 +51,21 @@ extern "C"
 #define FLASH_TYPE_TSTE 11
 #define FLASH_TYPE_PUYA 12
 #define FLASH_TYPE_GTEC 13
+#define FLASH_TYPE_FM 14
 
 #define FLASH_CMD_ENSO      0xB1            // enter secured OTP
 #define FLASH_CMD_EXSO      0xC1            // exit secured OTP
 #define FLASH_CMD_RDSCUR    0x2B            // read security register
 #define FLASH_CMD_WRSCUR    0x2F            // write security register
+#define FLASH_CMD_WB_ESCUR  0x44            // erase security register for Winbond flash          
+#define FLASH_CMD_WB_PSCUR  0x42            // write security register for Winbond flash
+#define FLASH_CMD_WB_RDSCUR 0x48            // read security register for Winbond flash
 
+#define WB_SECURITY_REG1_ADDR    0x001000
+#define WB_SECURITY_REG2_ADDR    0x002000
+#define WB_SECURITY_REG3_ADDR    0x003000
+
+#define FLASH_DUMMY_WB_RDSCUR     0x8
 /**
 
         \addtogroup hs_hal_gdma_flash_func FLASH HAL RAM APIs
@@ -102,6 +111,9 @@ void hal_flash_page_program (phal_spic_adaptor_t phal_spic_adaptor, u32 length, 
 void hal_flash_reset_to_spi (phal_spic_adaptor_t phal_spic_adaptor);
 void hal_flash_support_new_type (phal_spic_adaptor_t phal_spic_adaptor);
 u8 hal_flash_get_size (phal_spic_adaptor_t phal_spic_adaptor);
+void hal_flash_wb_secure_reg_read(phal_spic_adaptor_t phal_spic_adaptor, u32 length, u32 addr, u8 *data);
+void hal_flash_wb_secure_reg_erase(void *adaptor, u32 address);
+void hal_flash_wb_secure_reg_program(void *adaptor, u32 length, u32 addr, u8 *data);
 
 
 /** *@} */ /* End of group hs_hal_flash_ram_func */

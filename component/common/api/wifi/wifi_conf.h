@@ -107,7 +107,7 @@ extern __u32 GlobalDebugEnable;
 /**
  * @brief scan longest wait time
  */
-#define SCAN_LONGEST_WAIT_TIME  (4500)
+#define SCAN_LONGEST_WAIT_TIME  (12000)
 
 /**
  * @brief enable for partial channel scan
@@ -1527,6 +1527,47 @@ int wifi_set_block_bc_mc_packet(unsigned char enable, unsigned char types);
  * @return  RTW_ERROR, 0: reject, 1: allow.
  */
 int wifi_get_block_bc_mc_packet(unsigned char types);
+
+#if (defined(CONFIG_SUPPORT_BSSID_IGNORE) && (CONFIG_SUPPORT_BSSID_IGNORE == 1))
+/**
+ * @brief  Enable BSSID Ignore.
+ * @param[in] enable: 0: disable, 1: enable.
+ * @return  RTW_SUCCESS or RTW_ERROR.
+ */
+int wifi_set_bssid_ignore(unsigned char enable);
+
+/**
+ * @brief  Check if BSSID Ignore has been enabled/disabled.
+ * @return  0 (disable) or 1 (enable).
+ */
+int wifi_get_bssid_ignore(void);
+
+/**
+ * @brief  Read BSSID Ignore list.
+ * @return  RTW_SUCCESS or RTW_ERROR.
+ */
+int wifi_read_bssid_ignore_list(void);
+
+/**
+ * @brief  Find entry in BSSID Ignore list.
+ * @param[in] bssid: bssid to find.
+ * @return  RTW_SUCCESS or RTW_ERROR.
+ */
+int wifi_find_bssid_ignore_entry(u8 *bssid);
+
+/**
+ * @brief  Set the timeout value for bssid ignore entry to be release.
+ * @param[in] timeout: the timeout value on default it is set to 1 hour (3600).
+ * @return  RTW_SUCCESS or RTW_ERROR.
+ */
+int wifi_set_bssid_ignore_timeout(int timeout);
+
+/**
+ * @brief  Get the timeout value for bssid ignore.
+ * @return  RTW_SUCCESS or RTW_ERROR.
+ */
+int wifi_get_bssid_ignore_timeout(void);
+#endif //CONFIG_SUPPORT_BSSID_IGNORE
 
 #endif // CONFIG_MCC_STA_AP_MODE
 

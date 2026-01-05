@@ -88,8 +88,12 @@ int http_update_ota(char *host, int port, char *resource);
 #endif
 
 #ifdef HTTPS_OTA_UPDATE
+#include "mbedtls/version.h"
 #if !defined(MBEDTLS_CONFIG_FILE)
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
+#else
 #include "mbedtls/config.h"
+#endif
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif

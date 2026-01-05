@@ -194,6 +194,18 @@ extern int wifi_set_pmk_cache_enable(unsigned char value);
 #endif
 
 //----------------------------------------------------------------------------//
+int is_valid_hex(const char *str, int len)
+{
+	unsigned char j;
+	for (int i = 0; i < len; i++) {
+		j = (unsigned char)str[i];
+		if (!((j >= '0' && j <= '9') || (j >= 'A' && j <= 'F') || (j >= 'a' && j <= 'f'))) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 static int wifi_connect_local(rtw_network_info_t *pWifi)
 {
 	int ret = 0;
@@ -2209,21 +2221,28 @@ int wifi_start_ap(
 	}
 	if (security_type != RTW_SECURITY_OPEN) {
 		if (password_len <= RTW_WPA2_MAX_PSK_LEN &&
-			password_len >= RTW_MIN_PSK_LEN) {
+			password_len >= RTW_MIN_PSK_LEN && security_type != RTW_SECURITY_WEP_PSK) {
 			if (password_len == RTW_WPA2_MAX_PSK_LEN) { //password_len=64 means pre-shared key, pre-shared key should be 64 hex characters
-				unsigned char i, j;
-				for (i = 0; i < RTW_WPA2_MAX_PSK_LEN; i++) {
-					j = password[i];
-					if (!((j >= '0' && j <= '9') || (j >= 'A' && j <= 'F') || (j >= 'a' && j <= 'f'))) {
-						printf("Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
-						ret = RTW_INVALID_KEY;
-						goto exit;
-					}
+				if (!is_valid_hex(password, password_len)) {
+					printf("Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
+					ret = RTW_INVALID_KEY;
+					goto exit;
 				}
 			}
 		}
 #if defined(CONFIG_AP_SECURITY) && CONFIG_AP_SECURITY
-		else if ((password_len == 5) && (security_type == RTW_SECURITY_WEP_PSK)) {
+		else if (security_type == RTW_SECURITY_WEP_PSK) {
+			if ((password_len == 10) || (password_len == 26)) {
+				if (!is_valid_hex(password, password_len)) {
+					printf("Error: WEP password should be 10/26 hex characters or 5/13 ASCII characters\n\r");
+					ret = RTW_INVALID_KEY;
+					goto exit;
+				}
+			} else if ((password_len != 5) && (password_len != 13)) {
+				printf("Error: WEP password should be 10/26 hex characters or 5/13 ASCII characters\n\r");
+				ret = RTW_INVALID_KEY;
+				goto exit;
+			}
 		}
 #endif
 		else {
@@ -2340,7 +2359,7 @@ int wifi_start_ap_with_hidden_ssid(
 	}
 	if (security_type != RTW_SECURITY_OPEN) {
 		if (password_len <= RTW_WPA2_MAX_PSK_LEN &&
-			password_len >= RTW_MIN_PSK_LEN) {
+			password_len >= RTW_MIN_PSK_LEN && security_type != RTW_SECURITY_WEP_PSK) {
 			if (password_len == RTW_WPA2_MAX_PSK_LEN) { //password_len=64 means pre-shared key, pre-shared key should be 64 hex characters
 				unsigned char i, j;
 				for (i = 0; i < RTW_WPA2_MAX_PSK_LEN; i++) {
@@ -3595,8 +3614,7 @@ int wifi_config_autoreconnect(__u8 mode, __u8 retry_times, __u16 timeout)
 {
 	if (mode == RTW_AUTORECONNECT_DISABLE) {
 		p_wlan_autoreconnect_hdl = NULL;
-	}
-	else {
+	} else {
 		p_wlan_autoreconnect_hdl = wifi_autoreconnect_hdl;
 	}
 	return rltk_wlan_set_autoreconnect(WLAN0_NAME, mode, retry_times, timeout);
@@ -4114,6 +4132,14 @@ extern int rltk_wlan_set_aggregation(unsigned char option, rtw_ampdu_mode_t path
 extern int rltk_wlan_get_aggregation(rtw_ampdu_mode_t path);
 extern int rltk_wlan_set_block_bc_mc_packet(unsigned char enable, unsigned char types);
 extern int rltk_wlan_get_block_bc_mc_packet(unsigned char types);
+#if (defined(CONFIG_SUPPORT_BSSID_IGNORE) && (CONFIG_SUPPORT_BSSID_IGNORE == 1))
+extern int rltk_wlan_set_bssid_ignore(unsigned char enable);
+extern int rltk_wlan_get_bssid_ignore(void);
+extern int rltk_wlan_read_bssid_ignore_list(void);
+extern int rltk_wlan_find_bssid_ignore_list(u8 *bssid);
+extern int rltk_wlan_set_bssid_ignore_timeout(int timeout);
+extern int rltk_wlan_get_bssid_ignore_timeout(void);
+#endif //CONFIG_SUPPORT_BSSID_IGNORE
 
 int wifi_get_txrpt_statistic(const char *ifname, rtw_fw_txrpt_stats_t *txrpt_stats)
 {
@@ -4169,6 +4195,38 @@ int wifi_get_block_bc_mc_packet(unsigned char types)
 {
 	return rltk_wlan_get_block_bc_mc_packet(types);
 }
+
+#if (defined(CONFIG_SUPPORT_BSSID_IGNORE) && (CONFIG_SUPPORT_BSSID_IGNORE == 1))
+int wifi_set_bssid_ignore(unsigned char enable)
+{
+	return rltk_wlan_set_bssid_ignore(enable);
+}
+
+int wifi_get_bssid_ignore(void)
+{
+	return rltk_wlan_get_bssid_ignore();
+}
+
+int wifi_read_bssid_ignore_list(void)
+{
+	return rltk_wlan_read_bssid_ignore_list();
+}
+
+int wifi_find_bssid_ignore_entry(u8 *bssid)
+{
+	return rltk_wlan_find_bssid_ignore_list(bssid);
+}
+
+int wifi_set_bssid_ignore_timeout(int timeout)
+{
+	return rltk_wlan_set_bssid_ignore_timeout(timeout);
+}
+
+int wifi_get_bssid_ignore_timeout(void)
+{
+	return rltk_wlan_get_bssid_ignore_timeout();
+}
+#endif //CONFIG_SUPPORT_BSSID_IGNORE
 #endif
 
 int wifi_get_sta_security_type(void)

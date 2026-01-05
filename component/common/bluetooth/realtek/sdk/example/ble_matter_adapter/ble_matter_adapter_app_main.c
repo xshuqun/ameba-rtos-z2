@@ -38,7 +38,7 @@
 #include <gatt_builtin_services.h>
 #include <wifi_conf.h>
 #include "rtk_coex.h"
-#include "matter_blemgr_common.h"
+#include <matter_blemgr_common.h>
 #include <ble_matter_adapter_app.h>
 #include <ble_matter_adapter_app_task.h>
 #include <ble_matter_adapter_app_main.h>
@@ -46,12 +46,6 @@
 
 #if (F_BT_LE_USE_RANDOM_ADDR==1)
 #include <bt_example_entry.h>
-
-typedef struct {
-	uint8_t 	 is_exist;
-	uint8_t 	 reserved;		   /**< remote BD type*/
-	uint8_t 	 bd_addr[GAP_BD_ADDR_LEN];	/**< remote BD */
-} T_APP_STATIC_RANDOM_ADDR;
 #endif
 
 /** @defgroup  CENTRAL_CLIENT_DEMO_MAIN Central Client Main
@@ -63,14 +57,14 @@ typedef struct {
  *                  Constants
  *============================================================================*/
 /** @brief Default scan interval (units of 0.625ms, 0x520=820ms) */
-#define DEFAULT_SCAN_INTERVAL     0x520
+#define DEFAULT_SCAN_INTERVAL				0x520
 /** @brief Default scan window (units of 0.625ms, 0x520=820ms) */
-#define DEFAULT_SCAN_WINDOW       0x520
+#define DEFAULT_SCAN_WINDOW					0x520
 
 /** @brief  Default minimum advertising interval when device is discoverable (units of 625us, 160=100ms) */
-#define DEFAULT_ADVERTISING_INTERVAL_MIN        192 //120ms
+#define DEFAULT_ADVERTISING_INTERVAL_MIN	192 //120ms
 /** @brief  Default maximum advertising interval */
-#define DEFAULT_ADVERTISING_INTERVAL_MAX        192 //120ms
+#define DEFAULT_ADVERTISING_INTERVAL_MAX	192 //120ms
 
 extern T_SERVER_ID ble_matter_adapter_service_id;//from app.c
 extern T_GAP_DEV_STATE ble_matter_adapter_gap_dev_state;
@@ -330,4 +324,3 @@ void ble_matter_adapter_app_deinit(void)
 
 /** @} */ /* End of group CENTRAL_CLIENT_DEMO_MAIN */
 #endif
-

@@ -208,6 +208,25 @@ bool        le_get_conn_addr(uint8_t conn_id, uint8_t *bd_addr, uint8_t *bd_type
 bool        le_get_conn_id(uint8_t *bd_addr, uint8_t bd_type, uint8_t *p_conn_id);
 
 /**
+  * @brief  Get connection handle.
+  * @param[in]  conn_id Connection ID
+  * @return connection handle
+  * @retval 0xFFFF Get failed
+  * @retval Other Success
+  */
+uint16_t    le_get_conn_handle(uint8_t conn_id);
+
+/**
+  * @brief  Get connection ID from connection handle.
+  * @param[in]  conn_handle Connection handle
+  * @param[in, out] p_conn_id Connection ID
+  * @return Get result
+  * @retval true Success
+  * @retval false Get failed
+  */
+bool        le_get_conn_id_by_handle(uint16_t conn_handle, uint8_t *p_conn_id);
+
+/**
 * @brief   Get the active link number.
 *
 * @return  Active link number
@@ -315,6 +334,50 @@ T_GAP_CAUSE le_disconnect(uint8_t conn_id);
  * \endcode
  */
 T_GAP_CAUSE le_disconnect_with_reason(uint8_t conn_id, uint8_t reason);
+
+#if F_BT_LE_READ_REMOTE_VERSION_INFO_SUPPORT
+/**
+ * @brief   Obtain the values for the version information for the remote device identified by the conn_id parameter.
+ *          Remote version information will be returned by @ref app_gap_callback with cb_type @ref GAP_MSG_LE_READ_REMOTE_VERSION.
+ *
+ * @param[in] conn_id Connection ID
+ * @return  Read request result.
+ * @retval  GAP_CAUSE_SUCCESS: Send request success.
+ * @retval  GAP_CAUSE_SEND_REQ_FAILED: Send request sent fail.
+ * @retval  GAP_CAUSE_NON_CONN: Failed. No connection
+ *
+ * <b>Example usage</b>
+ * \code{.c}
+   void test()
+   {
+       uint8_t conn_id = 0;
+       le_read_remote_version(conn_id);
+   }
+
+   T_APP_RESULT app_gap_callback(uint8_t cb_type, void *p_cb_data)
+   {
+       T_APP_RESULT result = APP_RESULT_SUCCESS;
+       T_LE_CB_DATA cb_data;
+       memcpy(&cb_data, p_cb_data, sizeof(T_LE_CB_DATA));
+       APP_PRINT_TRACE1("app_gap_callback: cb_type is %d", cb_type);
+       switch (cb_type)
+       {
+       ...
+       case GAP_MSG_LE_READ_REMOTE_VERSION:
+           APP_PRINT_INFO5("GAP_MSG_LE_READ_REMOTE_VERSION: conn_id %d, cause 0x%x, version 0x%x, manufacturer_name 0x%x, subversion 0x%x",
+                           p_data->p_le_read_remote_version_rsp->conn_id,
+                           p_data->p_le_read_remote_version_rsp->cause,
+                           p_data->p_le_read_remote_version_rsp->version,
+                           p_data->p_le_read_remote_version_rsp->manufacturer_name,
+                           p_data->p_le_read_remote_version_rsp->subversion);
+        break;
+       }
+        ...
+   }
+ * \endcode
+ */
+T_GAP_CAUSE le_read_remote_version(uint8_t conn_id);
+#endif
 
 /**
  * @brief   Read rssi value of the connection. RSSI value will be returned by

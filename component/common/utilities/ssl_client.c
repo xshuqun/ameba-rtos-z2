@@ -3,8 +3,14 @@
 #include <stdio.h>
 #include "platform_opts.h"
 #include "osdep_service.h"
+#include "mbedtls/platform.h"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/error.h"
+#include "mbedtls/debug.h"
+#include "mbedtls/version.h"
 
-#if CONFIG_MBEDTLS_VERSION3 == 1
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 #include "mbedtls/build_info.h"
 #else
 #if !defined(MBEDTLS_CONFIG_FILE)
@@ -13,12 +19,6 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 #endif
-#include "mbedtls/platform.h"
-#include "mbedtls/net_sockets.h"
-#include "mbedtls/ssl.h"
-#include "mbedtls/error.h"
-#include "mbedtls/debug.h"
-#include "mbedtls/version.h"
 
 #if defined(configENABLE_TRUSTZONE) && (configENABLE_TRUSTZONE == 1) && defined(CONFIG_SSL_CLIENT_PRIVATE_IN_TZ) && (CONFIG_SSL_CLIENT_PRIVATE_IN_TZ == 1)
 #include "device_lock.h"
@@ -26,6 +26,7 @@
 
 #define SERVER_PORT   "443"
 #define SERVER_HOST   "192.168.13.15"
+#define SERVER_HOST_NAME   "192.168.61.112"//set as CN 
 #define GET_REQUEST   "GET / HTTP/1.0\r\n\r\n"
 #define DEBUG_LEVEL   0
 #define READ_TIMEOUT_MS		10000	// ssl read timeout value in ms
@@ -130,14 +131,18 @@ static void ssl_client(void *param)
 
 	mbedtls_ssl_init(&ssl);
 	mbedtls_ssl_config_init(&conf);
-
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+	mbedtls_ssl_set_hostname(&ssl, SERVER_HOST_NAME);
+#endif
 #ifdef SSL_CLIENT_EXT
 	if ((ret = ssl_client_ext_init()) != 0) {
 		printf(" failed\n\r  ! ssl_client_ext_init returned %d\n", ret);
 		goto exit;
 	}
 #endif
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+	psa_crypto_init();
+#endif
 	mbedtls_ssl_conf_read_timeout(&conf, READ_TIMEOUT_MS);
 	mbedtls_ssl_set_bio(&ssl, &server_fd, mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout);
 
@@ -153,7 +158,20 @@ static void ssl_client(void *param)
 	mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_NONE);
 	mbedtls_ssl_conf_rng(&conf, my_random, NULL);
 	mbedtls_ssl_conf_dbg(&conf, my_debug, NULL);
-
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000) && defined(MBEDTLS_SSL_PROTO_TLS1_3) && !defined(MBEDTLS_SSL_PROTO_TLS1_2)
+	mbedtls_ssl_conf_session_tickets(&conf, MBEDTLS_SSL_SESSION_TICKETS_ENABLED);
+	mbedtls_ssl_conf_tls13_key_exchange_modes(&conf, MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_ALL);
+	mbedtls_ssl_conf_min_version(&conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
+	mbedtls_ssl_conf_max_version(&conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_4);
+#if defined(MBEDTLS_SSL_RENEGOTIATION)
+	mbedtls_ssl_conf_renegotiation(&conf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+#endif
+	ret = mbedtls_net_set_block(&server_fd);
+	if (ret != 0) {
+		printf(" failed\n  ! net_set_(non)block() returned -0x%x\n\n", (unsigned int) - ret);
+		goto exit;
+	}
+#endif
 #if MBEDTLS_SSL_MAX_CONTENT_LEN == 4096
 	if ((ret = mbedtls_ssl_conf_max_frag_len(&conf, MBEDTLS_SSL_MAX_FRAG_LEN_4096)) < 0) {
 		printf(" failed\n\r  ! mbedtls_ssl_conf_max_frag_len %d\n", ret);
@@ -182,7 +200,11 @@ static void ssl_client(void *param)
 
 	while ((ret = mbedtls_ssl_handshake(&ssl)) != 0) {
 		if ((ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE
-			 && ret != MBEDTLS_ERR_NET_RECV_FAILED) || retry_count >= 5) {
+			 && ret != MBEDTLS_ERR_NET_RECV_FAILED
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
+			 && ret != MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS
+#endif
+			) || retry_count >= 5) {
 
 			printf(" failed\n\r  ! mbedtls_ssl_handshake returned -0x%x\n", -ret);
 			goto exit;

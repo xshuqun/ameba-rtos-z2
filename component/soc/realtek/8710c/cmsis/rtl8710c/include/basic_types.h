@@ -102,7 +102,7 @@ typedef unsigned char           BOOL;
 #ifndef bool
 #ifdef PLATFORM_OHOS
 typedef unsigned int           bool;
-#elif !(defined(CHIP_PROJECT) && CHIP_PROJECT)
+#elif !defined(__cplusplus)
 typedef unsigned char           bool;
 #endif
 #endif

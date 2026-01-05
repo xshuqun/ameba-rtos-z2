@@ -83,7 +83,7 @@ int ws_server_tls_setup_init(const char *server_cert, const char *server_key, co
 		ret = -1;
 		goto exit;
 	}
-#if CONFIG_MBEDTLS_VERSION3 == 1
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 	if ((ret = mbedtls_pk_parse_key(&wss_key, (const unsigned char *) server_key, strlen(server_key) + 1, NULL, 0, rtw_get_random_bytes_f_rng, 1)) != 0) {
 #else
 	if ((ret = mbedtls_pk_parse_key(&wss_key, (const unsigned char *) server_key, strlen(server_key) + 1, NULL, 0)) != 0) {
@@ -119,7 +119,9 @@ void *ws_server_tls_new_handshake(int *sock, uint8_t secure)
 		memset(tls, 0, sizeof(struct wss_tls));
 		ssl = &tls->ctx;
 		conf = &tls->conf;
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+		psa_crypto_init();
+#endif
 		mbedtls_ssl_init(ssl);
 		mbedtls_ssl_config_init(conf);
 

@@ -150,6 +150,8 @@ void rltk_coex_enable_null_frame(void);
 void rltk_coex_disable_null_frame(void);
 void rltk_coex_keep_bt_scan_for_wpa3(void);
 void rltk_coex_stop_bt_scan_for_wpa3(void);
+void rltk_coex_enable_wifi_random_slot(void);
+void rltk_coex_disable_wifi_random_slot(void);
 #endif
 
 u8 rltk_wlan_ap_compatibility_is_enable(u32 bitmap);

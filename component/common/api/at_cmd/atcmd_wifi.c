@@ -104,6 +104,7 @@ extern void inic_c2h_wifi_info(const char *atcmd, char status);
 extern void inic_c2h_msg(const char *atcmd, u8 status, char *msg, u16 msg_len);
 #endif
 extern int wifi_set_beacon_mode(int mode);
+extern int is_valid_hex(const char *str, int len);
 
 extern int rtw_join_status;
 #define JOIN_CONNECTING             (uint32_t)(1 << 10)
@@ -867,14 +868,14 @@ void fATW8(void *arg)
 
 void fATW9(void *arg)
 {
-	u8 mode = (u8) atoi((const char *)arg);
-
 	if (!arg) {
 		printf("[ATW9] Usage : ATW9=[AUTO_RECONNECT_MODE_ENABLE]\n\r");
 		printf("        0 : Disable auto-reconnect\n\r");
 		printf("        1 : Enable auto-reconnect\n\r");
 		return;
 	}
+
+	u8 mode = (u8) atoi((const char *)arg);
 
 	if (mode == 0) {
 		wifi_set_autoreconnect(0);
@@ -914,19 +915,15 @@ void fATWA(void *arg)
 			ap.password_len >= RTW_MIN_PSK_LEN) {
 			ap.security_type = RTW_SECURITY_WPA2_AES_PSK;
 			if (ap.password_len == RTW_WPA2_MAX_PSK_LEN) { //password_len=64 means pre-shared key, pre-shared key should be 64 hex characters
-				unsigned char i, j;
-				for (i = 0; i < RTW_WPA2_MAX_PSK_LEN; i++) {
-					j = ap.password[i];
-					if (!((j >= '0' && j <= '9') || (j >= 'A' && j <= 'F') || (j >= 'a' && j <= 'f'))) {
-						printf("[ATWA]Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
-						ret = RTW_INVALID_KEY;
-						goto exit;
-					}
+				if (!is_valid_hex((const char *)ap.password, ap.password_len)) {
+					printf("[ATWA]Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
+					ret = RTW_INVALID_KEY;
+					goto exit;
 				}
 			}
 		}
 #if defined(CONFIG_AP_SECURITY) && CONFIG_AP_SECURITY
-		else if (ap.password_len == 5) {
+		else if ((ap.password_len == 5) && (security == 1)) {
 			ap.security_type = RTW_SECURITY_WEP_PSK;
 		}
 #endif
@@ -943,6 +940,17 @@ void fATWA(void *arg)
 #if CONFIG_AP_SECURITY
 	else if (security == 1) {
 		ap.security_type = RTW_SECURITY_WEP_PSK;
+		if ((ap.password_len == 10) || (ap.password_len == 26)) {
+			if (!is_valid_hex((const char *)ap.password, ap.password_len)) {
+				printf("Error: WEP password should be 10/26 hex characters or 5/13 ASCII characters\n\r");
+				ret = RTW_INVALID_KEY;
+				goto exit;
+			}
+		} else if ((ap.password_len != 5) && (ap.password_len != 13)) {
+			printf("Error: WEP password should be 10/26 hex characters or 5/13 ASCII characters\n\r");
+			ret = RTW_INVALID_KEY;
+			goto exit;
+		}
 	}
 #endif
 	else if (security == 2) {
@@ -1381,22 +1389,48 @@ void fATWB(void *arg)
 			ap.password_len >= RTW_MIN_PSK_LEN) {
 			ap.security_type = RTW_SECURITY_WPA2_AES_PSK;
 			if (ap.password_len == RTW_WPA2_MAX_PSK_LEN) { //password_len=64 means pre-shared key, pre-shared key should be 64 hex characters
-				unsigned char i, j;
-				for (i = 0; i < RTW_WPA2_MAX_PSK_LEN; i++) {
-					j = ap.password[i];
-					if (!((j >= '0' && j <= '9') || (j >= 'A' && j <= 'F') || (j >= 'a' && j <= 'f'))) {
-						printf("[ATWB]Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
-						ret = RTW_INVALID_KEY;
-						goto exit;
-					}
+				if (!is_valid_hex((const char *)ap.password, ap.password_len)) {
+					printf("[ATWA]Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
+					ret = RTW_INVALID_KEY;
+					goto exit;
 				}
 			}
-		} else {
+		}
+#if defined(CONFIG_AP_SECURITY) && CONFIG_AP_SECURITY
+		else if ((ap.password_len == 5) && (security == 1)) {
+			ap.security_type = RTW_SECURITY_WEP_PSK;
+		}
+#endif
+		else {
 			printf("[ATWB]Error: password should be 64 hex characters or 8-63 ASCII characters\n\r");
 			ret = RTW_INVALID_KEY;
 			goto exit;
 		}
 	}
+#ifdef CONFIG_AP_SECURITY
+	if (security == 0) {
+		ap.security_type = RTW_SECURITY_OPEN;
+	}
+#if CONFIG_AP_SECURITY
+	else if (security == 1) {
+		ap.security_type = RTW_SECURITY_WEP_PSK;
+		if ((ap.password_len == 10) || (ap.password_len == 26)) {
+			if (!is_valid_hex((const char *)ap.password, ap.password_len)) {
+				printf("Error: WEP password should be 10/26 hex characters or 5/13 ASCII characters\n\r");
+				ret = RTW_INVALID_KEY;
+				goto exit;
+			}
+		} else if ((ap.password_len != 5) && (ap.password_len != 13)) {
+			printf("Error: WEP password should be 10/26 hex characters or 5/13 ASCII characters\n\r");
+			ret = RTW_INVALID_KEY;
+			goto exit;
+		}
+	}
+#endif
+	else if (security == 2) {
+		ap.security_type = RTW_SECURITY_WPA2_AES_PSK;
+	}
+#endif
 
 #if CONFIG_LWIP_LAYER
 	dhcps_deinit();

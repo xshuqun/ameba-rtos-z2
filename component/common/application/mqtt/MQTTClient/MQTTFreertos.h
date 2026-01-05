@@ -26,7 +26,13 @@
 
 #define MQTT_OVER_SSL (1)
 #if (MQTT_OVER_SSL)
-#if CONFIG_MBEDTLS_VERSION3 == 1 
+#include "mbedtls/platform.h"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/error.h"
+#include "mbedtls/debug.h"
+
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 #include "mbedtls/build_info.h"
 #else
 #if !defined(MBEDTLS_CONFIG_FILE)
@@ -35,11 +41,6 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 #endif
-#include "mbedtls/platform.h"
-#include "mbedtls/net_sockets.h"
-#include "mbedtls/ssl.h"
-#include "mbedtls/error.h"
-#include "mbedtls/debug.h"
 #endif
 
 enum {

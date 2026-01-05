@@ -4,14 +4,18 @@ Description:
 Download file from Web server via https.
 
 Configuration:
-Modify SERVER_HOST, SERVER_PORT and RESOURCE in example_ssl_download.c based on your SSL server.
+Modify SERVER_HOST, SERVER_HOST_NAME, SERVER_PORT and RESOURCE in example_ssl_download.c based on your SSL server.
 
 Modify SSL_MAX_CONTENT_LEN in SSL config and configTOTAL_HEAP_SIZE in freertos config for large size file.
 	If the transmitted fils size is larger than 16kbytes, SSL_MAX_CONTENT_LEN should be set to 16384.
 	FreeRTOS heap may be increased for ssl buffer allocation.
 	(ex. If using 16kbytes * 2 for ssl input/output buffer, heap should be increased from 60kbytes to 80kbytes.)
-[config_rsa.h]
+[config_rsa.h] for mbedtls version is below 3.4.0
 	#define SSL_MAX_CONTENT_LEN            16384
+or
+[mbedtls_config.h] for mbedtls version above 3.4.0
+	#define MBEDTLS_SSL_IN_CONTENT_LEN              16384
+	#define MBEDTLS_SSL_OUT_CONTENT_LEN             16384
 [FreeRTOSConfig.h]
 	#define configTOTAL_HEAP_SIZE          ( ( size_t ) ( 80 * 1024 ) )
 

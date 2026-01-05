@@ -11,7 +11,8 @@
 //sub event from fw start
 #define HCI_VENDOR_PTA_REPORT_EVENT         0x24
 #define HCI_VENDOR_PTA_AUTO_REPORT_EVENT    0x25
-#define HCI_VENDOR_LOWERSTACK_EXCEPTION_EVENT 0x03
+#define HCI_VENDOR_LOWERSTACK_EXCEPTION_EVENT  0x03
+#define HCI_VENDOR_DUPLICATE_FILTER_FULL_EVENT 0x04
 
 
 bool mailbox_to_bt(uint8_t *data, uint8_t len);

@@ -57,4 +57,4 @@ To download image to board, you can either
 # Release Notes
 
 ## Vesion Sync
-GitHub `ameba-rtos-z2` is currently synchronized with 7.1 GIT 240830_26dad548.
+GitHub `ameba-rtos-z2` is currently synchronized with 7.1 GIT 20251103_7eba7db1.

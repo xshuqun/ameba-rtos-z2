@@ -698,11 +698,14 @@ bool hci_board_init(void)
 
 void hci_board_init_done(void)
 {
+#if defined(CONFIG_BT_COEX_POWERSAVE) && CONFIG_BT_COEX_POWERSAVE
+	/* Allow IPS/LPS when Wifi and BT both are enable */
 	if(hal_get_chip_ver() >= 3) { // Only for chip versions above C.
 		if (!rltk_wlan_is_mp()) {
 			wifi_resume_powersave();
 		}
 	}
+#endif
 }
 
 void bt_power_on(void)
@@ -717,10 +720,8 @@ void bt_power_off(void)
 	hal_wlan_pwr_off();
 #else
 	rltk_coex_bt_enable(0);
-	if(hal_get_chip_ver() < 3) { // A, B, C cut still have to resume powersave mode.
-		if (!rltk_wlan_is_mp() ) {
-			wifi_resume_powersave();
-		}
+	if (!rltk_wlan_is_mp() ) {
+		wifi_resume_powersave();
 	}
 #endif
 }
@@ -902,8 +903,8 @@ bool bt_iqk_logic_efuse_valid(BT_Cali_TypeDef  *bt_iqk_data)
 bool bt_check_iqk(void)
 {
 	BT_Cali_TypeDef     bt_iqk_data;
-        
-	if(!hci_tp_lgc_efuse[LEFUSE(0x1a1)] & BIT0)
+
+	if(!(hci_tp_lgc_efuse[LEFUSE(0x1a1)] & BIT0))
 	{
 		hci_board_debug("\r\n%s: USE FIX LOGIC EFUSE\r\n",__FUNCTION__);
 		if (bt_iqk_logic_efuse_valid(&bt_iqk_data))

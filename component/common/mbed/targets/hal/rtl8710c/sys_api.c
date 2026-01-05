@@ -37,6 +37,13 @@
 
 #define FLASH_SECTOR_SIZE				0x1000
 
+const TM0_Type *timer_base_address[MaxGTimerNum] = {
+	TM0,  TM1,  TM2,  TM3,
+	TM4,  TM5,  TM6,  TM7,
+	TM8
+};
+
+
 extern hal_uart_adapter_t log_uart;
 extern hal_spic_adaptor_t *pglob_spic_adaptor;
 extern void log_uart_port_init(int log_uart_tx, int log_uart_rx, uint32_t baud_rate);
@@ -393,11 +400,20 @@ void sys_uart_download_mode(void)
   */
 void sys_download_mode(u8 mode)
 {
+	TM0_Type *tmr_ba;
 	sys_log_uart_off();
 	sys_disable_fast_boot();
 	hci_tp_close();
 	hal_wlan_pwr_off();
 	crypto_deinit();
+
+	for (int i = 0; i < MaxGTimerNum; i++) {
+		tmr_ba = (TM0_Type *)timer_base_address[i];
+		if (tmr_ba->ctrl_b.en) {
+			tmr_ba->ctrl_b.en = 0;
+		}
+	}
+
 #if defined(CONFIG_FLASH_XIP_EN) && (CONFIG_FLASH_XIP_EN == 1)
 	__disable_irq();
 	if (pglob_spic_adaptor != NULL) {

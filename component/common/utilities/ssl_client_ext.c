@@ -1,7 +1,9 @@
 #include "osdep_service.h"
 #include "platform_opts.h"
+#include "mbedtls/platform.h"
+#include "mbedtls/ssl.h"
 
-#if CONFIG_MBEDTLS_VERSION3 == 1
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 #include "mbedtls/build_info.h"
 #else
 #if !defined(MBEDTLS_CONFIG_FILE)
@@ -10,8 +12,6 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 #endif
-#include "mbedtls/platform.h"
-#include "mbedtls/ssl.h"
 
 //#define SSL_VERIFY_CLIENT
 //#define SSL_VERIFY_SERVER
@@ -208,7 +208,7 @@ int ssl_client_ext_setup(mbedtls_ssl_config *conf)
 		return -1;
 	}
 #else
-#if CONFIG_MBEDTLS_VERSION3 == 1
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 	if (mbedtls_pk_parse_key(_clikey_rsa, test_client_key, strlen((char const *)test_client_key) + 1, NULL, 0, rtw_get_random_bytes_f_rng, 1) != 0)
 #else
 	if (mbedtls_pk_parse_key(_clikey_rsa, test_client_key, strlen((char const *)test_client_key) + 1, NULL, 0) != 0)

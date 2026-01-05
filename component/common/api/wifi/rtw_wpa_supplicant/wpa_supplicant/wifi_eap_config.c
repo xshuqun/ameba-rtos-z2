@@ -10,10 +10,12 @@
 #include "utils/os.h"
 #include "wifi/wifi_conf.h"
 #include <platform/platform_stdlib.h>
+#include <mbedtls/platform.h>
+#include <mbedtls/ssl.h>
 
-#if CONFIG_MBEDTLS_VERSION3 == 1
-#include "mbedtls/build_info.h"
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 #include "ssl_misc.h"
+#define MBEDTLS_SSL_COMPRESSION_ADD 0
 #define MBEDTLS_SSL_MAX_CONTENT_LEN  MBEDTLS_SSL_IN_CONTENT_LEN
 #else
 #if !defined(MBEDTLS_CONFIG_FILE)
@@ -23,8 +25,6 @@
 #endif
 #include <mbedtls/ssl_internal.h>
 #endif
-#include <mbedtls/platform.h>
-#include <mbedtls/ssl.h>
 
 #define WLAN0_NAME "wlan0"
 #ifndef ENABLE
@@ -52,6 +52,9 @@ const unsigned char *eap_client_key = NULL;
 int eap_client_cert_len = 0;
 int eap_client_key_len = 0;
 char *eap_client_key_pwd = NULL;
+
+// To fix compatibility issue with specific servers.
+int eap_conf_compatibility = 1; /* 1: eap compatibility enabled, 0: eap compatibility disabled */
 
 int max_buf_bio_size = (MBEDTLS_SSL_MAX_CONTENT_LEN                \
 						+ MBEDTLS_SSL_COMPRESSION_ADD               \

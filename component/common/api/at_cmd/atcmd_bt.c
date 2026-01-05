@@ -99,6 +99,13 @@ extern void *ble_throughput_evt_queue_handle;
 extern void *ble_throughput_io_queue_handle;
 #endif
 
+#if defined(CONFIG_BLE_WIFIMATE_CONFIGURATOR) && CONFIG_BLE_WIFIMATE_CONFIGURATOR
+#include "ble_wifimate_configurator_app.h"
+#endif
+#if defined(CONFIG_BLE_WIFIMATE_DEVICE) && CONFIG_BLE_WIFIMATE_DEVICE
+#include "ble_wifimate_device_app.h"
+#endif
+
 uint8_t bt_cmd_type = 0x00;
 
 void set_bt_cmd_type(uint8_t cmd_type)
@@ -1821,7 +1828,6 @@ exit:
 	(defined(CONFIG_BT_MESH_DEVICE_MULTIPLE_PROFILE) && CONFIG_BT_MESH_DEVICE_MULTIPLE_PROFILE) || \
 	(defined(CONFIG_EXAMPLE_BT_MESH_DEMO) && CONFIG_EXAMPLE_BT_MESH_DEMO))
 #include "mesh_config.h"
-#include "mesh_api.h"
 extern void app_send_uart_msg(uint8_t data);
 extern void bt_mesh_param_user_cmd(unsigned int argc, char **argv);
 static void bt_mesh_set_cmd(unsigned int argc, char *argv[])
@@ -2260,8 +2266,134 @@ exit:
 	AT_PRINTK("[ATB2] eg:ATB2=TEST,206,6,0,20,0,4000,0");
 	AT_PRINTK("[ATB2] eg:ATB2=TEST,206");
 }
-
 #endif
+
+#if ((defined(CONFIG_BLE_WIFIMATE_DEVICE) && CONFIG_BLE_WIFIMATE_DEVICE) || \
+	 (defined(CONFIG_BLE_WIFIMATE_CONFIGURATOR) && CONFIG_BLE_WIFIMATE_CONFIGURATOR))
+#if defined(CONFIG_BLE_WIFIMATE_DEVICE) && CONFIG_BLE_WIFIMATE_DEVICE
+extern int ble_wifimate_device_app_init(uint16_t timeout);
+extern int ble_wifimate_device_app_deinit(void);
+extern void ble_wifimate_device_app_send_msg(uint16_t subtype, void *buf);
+#endif /* CONFIG_BLE_WIFIMATE_DEVICE */
+#if defined(CONFIG_BLE_WIFIMATE_CONFIGURATOR) && CONFIG_BLE_WIFIMATE_CONFIGURATOR
+extern int ble_wifimate_configurator_app_init(void);
+extern int ble_wifimate_configurator_app_deinit(void);
+extern void ble_wifimate_configurator_app_send_msg(uint16_t subtype, void *buf);
+#endif /* CONFIG_BLE_WIFIMATE_CONFIGURATOR */
+char ble_wifimate_buf[256] = {0};
+void fATBw(void *arg)
+{
+	int argc = 0;
+	int param0 = 0;
+	int param1 = 0;
+	char *argv[MAX_ARGC] = {0};
+
+	if (arg) {
+		memset(ble_wifimate_buf, 0, sizeof(ble_wifimate_buf));
+		strncpy(ble_wifimate_buf, arg, sizeof(ble_wifimate_buf));
+		argc = parse_param(arg, argv);
+	} else {
+		goto exit;
+	}
+
+	if (argc < 3) {
+		AT_PRINTK("[AT_PRINTK] ERROR: input parameter error!\r\n");
+		goto exit;
+	}
+
+	param0 = atoi(argv[1]);
+	param1 = atoi(argv[2]);
+
+	if (param0 == 0) { //ble wifimate configurator example
+#if (defined(CONFIG_BLE_WIFIMATE_CONFIGURATOR) && CONFIG_BLE_WIFIMATE_CONFIGURATOR)
+		if (param1 == 1) { //init: ATBw=0,1
+			AT_PRINTK("[ATBw]:ble wifimate configurator init\r\n");
+			ble_wifimate_configurator_app_init();
+		} else if (param1 == 0) { //deinit: ATBw=0,0
+			AT_PRINTK("[ATBw]:ble wifimate configurator deinit\r\n");
+			ble_wifimate_configurator_app_deinit();
+		} else if (param1 == 2) { //scan
+			int op;
+			if (argc != 4) {
+				goto exit;
+			}
+			op = atoi(argv[3]);
+			if (op == 1) { //scan start: ATBw=0,2,1
+				ble_wifimate_configurator_app_send_msg(BLE_WIFIMATE_CONFIGURATOR_SCAN_START, NULL);
+			} else if (op == 0) { //scan stop: ATBw=0,2,0
+				ble_wifimate_configurator_app_send_msg(BLE_WIFIMATE_CONFIGURATOR_SCAN_STOP, NULL);
+			}
+		} else if (param1 == 3) { //ble connect : ATBw=0,3,<addr>
+			if (argc != 4) {
+				goto exit;
+			}
+			ble_wifimate_configurator_app_send_msg(BLE_WIFIMATE_CONFIGURATOR_BLE_CONNECT, ble_wifimate_buf);
+		} else if (param1 == 4) { //wifi scan: ATBw=0,4,<conn_handle>
+			if (argc != 4) {
+				goto exit;
+			}
+			ble_wifimate_configurator_app_send_msg(BLE_WIFIMATE_CONFIGURATOR_WIFI_SCAN, ble_wifimate_buf);
+		} else if (param1 == 5) { //wifi connect: ATBw=0,5,<conn_handle>,<ssid>,<security>[,<pw>]
+			if ((argc != 6) && (argc != 7)) {
+				goto exit;
+			}
+			ble_wifimate_configurator_app_send_msg(BLE_WIFIMATE_CONFIGURATOR_WIFI_CONNECT, ble_wifimate_buf);
+		} else if (param1 == 6) { //encrypt set: ATBw=0,6,<algo_type>[,<key>]
+			if ((argc != 4) && (argc != 5)) {
+				goto exit;
+			}
+			ble_wifimate_configurator_app_send_msg(BLE_WIFIMATE_CONFIGURATOR_ENCRYPT_SET, ble_wifimate_buf);
+		}  else {
+			goto exit;
+		}
+#endif /* CONFIG_BLE_WIFIMATE_CONFIGURATOR */
+	} else if (param0 == 1) { // ble wifimate device exmaple
+#if (defined(CONFIG_BLE_WIFIMATE_DEVICE) && CONFIG_BLE_WIFIMATE_DEVICE)
+
+		if (param1 == 1) { //init: ATBw=1,1
+			uint16_t timeout = 60; //60s
+			AT_PRINTK("[ATBw]:ble wifimate device init\r\n");
+			if (argc == 4) {
+				timeout = (uint16_t)atoi(argv[3]);
+				AT_PRINTK("Ble wifimate adv timeout=%d\r\n", timeout);
+			}
+			ble_wifimate_device_app_init(timeout);
+		} else if (param1 == 0) { //deinit: ATBw=1,0
+			AT_PRINTK("[ATBw]:ble wifimate device deinit\r\n");
+			ble_wifimate_device_app_deinit();
+		} else if (param1 == 2) { //adv: ATBw=1,2,1/0
+			int op;
+			if (argc != 4) {
+				goto exit;
+			}
+			op = atoi(argv[3]);
+			if (op == 1) {
+				ble_wifimate_device_app_send_msg(BLE_WIFIMATE_DEVICE_ADV_START, NULL);
+			} else if (op == 0) {
+				ble_wifimate_device_app_send_msg(BLE_WIFIMATE_DEVICE_ADV_STOP, NULL);
+			}
+		} else {
+			goto exit;
+		}
+#endif
+	} else {
+		goto exit;
+	}
+
+	return;
+
+exit:
+	AT_PRINTK("[ATBw] ble wifimate configurator example init/deinit: ATBw=0,1/0");
+	AT_PRINTK("[ATBw] ble wifimate configurator scan start/stop: ATBw=0,2,1/0");
+	AT_PRINTK("[ATBw] ble wifimate configurator ble connect: ATBw=0,3,<addr>");
+	AT_PRINTK("[ATBw] ble wifimate configurator wifi scan: ATBw=0,4,<conn_handle>");
+	AT_PRINTK("[ATBw] ble wifimate configurator wifi connect: ATBw=0,5,<conn_handle>,<ssid>,<security>[,<pw>]");
+	AT_PRINTK("[ATBw] ble wifimate configurator set encrypt: ATBw=0,6,<algo_type>[,<key>]");
+	AT_PRINTK("[ATBw] ble wifimate device example init: ATBw=1,1[,<timeout>]");
+	AT_PRINTK("[ATBw] ble wifimate device example deinit: ATBw=1,0");
+	AT_PRINTK("[ATBw] ble wifimate device adv start/stop: ATBw=1,2,1/0");
+}
+#endif /* CONFIG_BLE_WIFIMATE_DEVICE || CONFIG_BLE_WIFIMATE_CONFIGURATOR */
 
 log_item_t at_bt_items[ ] = {
 #if ((defined(CONFIG_BT_CENTRAL) && CONFIG_BT_CENTRAL) || \
@@ -2368,6 +2500,10 @@ log_item_t at_bt_items[ ] = {
 #if defined(CONFIG_BT_THROUGHPUT_TEST) && CONFIG_BT_THROUGHPUT_TEST
 	{"ATB1", fATB1, {NULL, NULL}}, // Start/stop BLE throughput test
 	{"ATB2", fATB2, {NULL, NULL}}, // Prepare for throughput test and Select Testcase
+#endif
+#if ((defined(CONFIG_BLE_WIFIMATE_DEVICE) && CONFIG_BLE_WIFIMATE_DEVICE) || \
+	 (defined(CONFIG_BLE_WIFIMATE_CONFIGURATOR) && CONFIG_BLE_WIFIMATE_CONFIGURATOR))
+	{"ATBw", fATBw, {NULL, NULL}}, // BLE WiFiMate
 #endif
 };
 

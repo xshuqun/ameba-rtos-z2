@@ -24,14 +24,31 @@ extern "C" {
  *============================================================================*/
 #include <profile_client.h>
 #include <app_msg.h>
-
+#include <gap_conn_le.h>
+#include <ble_central_app_flags.h>
 
 #define BD_ADDR_FMT "%02x:%02x:%02x:%02x:%02x:%02x"
 #define BD_ADDR_ARG(x) (x)[5],(x)[4],(x)[3],(x)[2],(x)[1],(x)[0]
 #define UUID_128_FORMAT "0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X:0x%2X"
 #define UUID_128(x)  x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],x[8],x[9],x[10],x[11],x[12],x[13],x[14],x[15]
 
-
+/*============================================================================*
+ *                              Constants
+ *============================================================================*/
+/** @addtogroup  CENTRAL_CLIENT_GAP_MSG
+    * @{
+    */
+/**
+ * @brief  Application Link control block defination.
+ */
+typedef struct
+{
+    T_GAP_CONN_STATE        conn_state;          /**< Connection state. */
+    T_GAP_REMOTE_ADDR_TYPE  bd_type;             /**< remote BD type*/
+    uint8_t                 bd_addr[GAP_BD_ADDR_LEN]; /**< remote BD */
+    T_GAP_ROLE              role;                   //!< Device role
+} T_APP_LINK;
+/** @} */ /* End of group CENTRAL_CLIENT_GAP_MSG */
 
 /*============================================================================*
  *                              Variables

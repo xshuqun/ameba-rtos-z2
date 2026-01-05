@@ -30,7 +30,9 @@
 #include "hal_cache.h"
 #include "hal_sce.h"
 #include "memory.h"
-
+#ifndef CONFIG_BUILD_BOOT
+#include "osdep_service.h"
+#endif
 extern hal_status_t hal_xip_get_phy_addr (uint32_t vaddr, uint32_t *ppaddr, uint32_t *pis_enc);
 
 /**
@@ -212,6 +214,11 @@ hal_status_t NS_ENTRY hal_gdma_chnl_unregister_ns(phal_gdma_adaptor_t phal_gdma_
 hal_status_t hal_gdma_chnl_alloc (phal_gdma_adaptor_t phal_gdma_adaptor)
 {
     phal_gdma_chnl_t pgdma_chnl;
+#ifndef CONFIG_BUILD_BOOT
+	_lock lock;
+	_irqL irqL;
+	rtw_enter_critical(&lock, &irqL);
+#endif
 
     if (phal_gdma_adaptor->have_chnl == 0) {
         pgdma_chnl = (phal_gdma_chnl_t)(&gdma_chnl_option[0]);
@@ -230,13 +237,18 @@ hal_status_t hal_gdma_chnl_alloc (phal_gdma_adaptor_t phal_gdma_adaptor)
         }
 
         if (pgdma_chnl->gdma_indx > MAX_GDMA_INDX) {
+#ifndef CONFIG_BUILD_BOOT
+            rtw_exit_critical(&lock, &irqL);
+#endif
             return HAL_ERR_PARA;
         }
     }
 
     phal_gdma_adaptor->dcache_invalidate_by_addr = hal_cache_stubs.dcache_invalidate_by_addr;
     phal_gdma_adaptor->dcache_clean_by_addr = hal_cache_stubs.dcache_clean_by_addr;
-
+#ifndef CONFIG_BUILD_BOOT
+	rtw_exit_critical(&lock, &irqL);
+#endif
     return HAL_OK;
 }
 
@@ -251,6 +263,11 @@ hal_status_t hal_gdma_chnl_alloc (phal_gdma_adaptor_t phal_gdma_adaptor)
  */
 void hal_gdma_chnl_free (phal_gdma_adaptor_t phal_gdma_adaptor)
 {
+#ifndef CONFIG_BUILD_BOOT
+	_lock lock;
+	_irqL irqL;
+	rtw_enter_critical(&lock, &irqL);
+#endif
     /*Mask the corresponding ISR bits of the cahnnel*/
     hal_gdma_isr_dis(phal_gdma_adaptor);
 
@@ -260,6 +277,10 @@ void hal_gdma_chnl_free (phal_gdma_adaptor_t phal_gdma_adaptor)
     hal_gdma_chnl_irq_free(phal_gdma_adaptor);
 
     phal_gdma_adaptor->have_chnl = 0;
+
+#ifndef CONFIG_BUILD_BOOT
+    rtw_exit_critical(&lock, &irqL);
+#endif
 }
 
 /** *@} */ /* End of group hs_hal_gdma_ram_func */

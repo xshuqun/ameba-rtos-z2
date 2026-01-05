@@ -11,7 +11,7 @@
 #include "utils/common.h"
 #include "tls.h"
 #include <mbedtls/ssl.h>
-#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER==0x03010000)
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03010000)
 #include <mbedtls/net_sockets.h>
 #include "ssl_misc.h"
 #else
@@ -296,6 +296,11 @@ struct tls_connection *tls_connection_init(void *tls_ctx)
 	mbedtls_ssl_conf_authmode(tls_context->conf, MBEDTLS_SSL_VERIFY_NONE);
 	mbedtls_ssl_conf_rng(tls_context->conf, my_random, NULL);
 
+#if defined(MBED_TLS_DEBUG_ENABLE) && (MBED_TLS_DEBUG_ENABLE == 1)
+	mbedtls_ssl_conf_dbg(tls_context->conf, mbedtls_debug, NULL);
+	// mbedtls_ssl_conf_min_version(tls_context->conf, MBEDTLS_SSL_MINOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
+#endif
+
 	if ((ret = mbedtls_ssl_setup(tls_context->ssl, tls_context->conf)) != 0) {
 		wpa_printf(MSG_INFO, "TLS: mbedtls_ssl_setup() failed");
 		return NULL;
@@ -494,7 +499,9 @@ struct wpabuf *tls_connection_handshake(void *tls_ctx,
 	while (ssl->state != MBEDTLS_SSL_HANDSHAKE_OVER) {
 		wpa_printf(MSG_INFO, "TLS: connection handshake, state: %d", ssl->state);
 		//printf("\nTLS: connection handshake, state: %d\n", ssl->state);
-
+#if defined (MBEDTLS_PSA_CRYPTO_C) && defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER>=0x03040000)
+		psa_crypto_init();
+#endif
 		ret = mbedtls_ssl_handshake_step(ssl);
 
 		// keep the client random & server random for eap further use

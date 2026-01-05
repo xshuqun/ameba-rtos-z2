@@ -97,6 +97,7 @@
 #define IFX_XMC4XXX                         1
 
 #define CONFIG_LIGHT_PRINTF                 1   // use lighter printf (use smaller stack size)
+#define CONFIG_OFF_LOG                      0
 #define CONFIG_SYS_TIMER_ID                 0   // the G-Timer ID be used as free run system ticker
 #define CONFIG_TIMER_SCLK_FREQ              (PLATFORM_SCLK)   // GTimer SCLK: 32K/ 26M / 40M
 #if (CONFIG_TIMER_SCLK_FREQ == 32000)
