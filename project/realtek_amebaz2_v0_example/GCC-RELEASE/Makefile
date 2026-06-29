@@ -34,7 +34,7 @@ dump:
 #                         MATTER MAKE DEFINES                                 #
 #*****************************************************************************#
 
-ENABLE_MATTER = 0
+ENABLE_MATTER = 1
 
 ifeq ($(ENABLE_MATTER), 1)
 
