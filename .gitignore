@@ -4,6 +4,8 @@
 *.o
 *.su
 *.s
+*.i
+*.ii
 tools
 libsrc
 
@@ -18,6 +20,11 @@ project/realtek_amebaz2plus_v0_example/GCC-RELEASE/partition.bin
 project/realtek_amebaz2plus_v0_example/inc/build_info.h
 
 component/common/application/matter/
+
+project/realtek_amebaz2_v0_example/GCC-RELEASE/lib_main*
+project/realtek_amebaz2_v0_example/GCC-RELEASE/application_is
+project/realtek_amebaz2plus_v0_example/GCC-RELEASE/lib_main*
+project/realtek_amebaz2plus_v0_example/GCC-RELEASE/application_is
 
 component/soc/realtek/8710c/misc/bsp/lib/common/GCC/libCHIP.a
 component/soc/realtek/8710c/misc/bsp/lib/common/GCC/libCHIPShell.a
